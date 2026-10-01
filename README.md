@@ -22,24 +22,6 @@ scripts/lint.sh          lint: swift-format i limit wcięć
 
 Architektura: SwiftUI + MVVM. Nowe pliki dodane do folderów `MyNextMovie/` i `MyNextMovieTests/` trafiają do projektu same.
 
-## Styl kodu
-
-Projekt jest napisany prosto, bliżej C niż typowego Swifta:
-
-- dane to struktury bez metod, np. `Movie`,
-- logika to zwykłe funkcje, np. `releaseYear(movie)`,
-- zależności przekazujesz jako funkcje, np. `MovieListViewModel(loadMovies: loadSampleMovies)`,
-- brak wartości to wartość pusta, jak w C: `""` dla tekstu, `0` dla gatunku, `-1` dla indeksu,
-- zamiast `if let`, `guard let`, `map` i `filter` piszesz zwykłe `if` i pętlę `for`,
-- stan ekranu to `enum` bez dołączonych wartości, a dane leżą obok w zwykłych polach,
-- **maksymalnie 3 poziomy wcięć w funkcji**, jak w jądrze Linuksa. Głębiej? Wydziel funkcję albo widok.
-- nazwy mówią, czego dotyczą: `positionInGenreTable`, `selectedGenreId`, `trimmedQuery`. Żadnych `i`, `j`, `x`. Długa nazwa jest lepsza niż niejasna,
-- zamiast magicznych liczb i napisów są stałe: `genreIdAction` zamiast `28`, `noGenreId` zamiast `0`, `spacingLarge` zamiast `16`. Wyjątek to teksty widoczne na ekranie, bo Xcode wyciąga je z widoków do tłumaczeń.
-
-Klasa jest tylko tam, gdzie wymaga jej SwiftUI: ViewModel z `@Observable`. Widoki to struktury, bo tak działa SwiftUI.
-
-Programowanie obiektowe nie jest zakazane. Klasy, protokoły i metody możesz stosować tam, gdzie uznasz je za lepsze. Wybór należy do Ciebie.
-
 ## Zadania
 
 Zadania na każde zajęcia są w folderze `docs/`. Zaczynasz od [docs/lab1.md](docs/lab1.md).
