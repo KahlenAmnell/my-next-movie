@@ -214,7 +214,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Lint findings show up as warnings. Fix formatting with: make format\n\"$SRCROOT/scripts/lint.sh\"\n";
+			shellScript = "# Lint findings show up as warnings. Fix formatting with Editor > Structure > Format File with 'swift-format'.\n\"$SRCROOT/scripts/lint.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */

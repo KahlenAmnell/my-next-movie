@@ -2,7 +2,7 @@
 # Lints the Swift sources: swift-format rules plus the indentation limit.
 #
 #   scripts/lint.sh           findings are warnings, exit code 0 (Xcode build phase)
-#   scripts/lint.sh --strict  findings are errors, exit code 1 (make lint, CI)
+#   scripts/lint.sh --strict  findings are errors, exit code 1 (CI)
 
 cd "$(dirname "$0")/.." || exit 1
 root=$(pwd)

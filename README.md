@@ -17,7 +17,6 @@ MyNextMovieTests/        testy jednostkowe (Swift Testing)
 docs/                    zadania na kolejne laboratoria
 MyNextMovie.xctestplan   plan testów
 Config/                  ustawienia builda (.xcconfig), Info.plist
-scripts/lint.sh          lint: swift-format i limit wcięć
 ```
 
 Architektura: SwiftUI + MVVM. Nowe pliki dodane do folderów `MyNextMovie/` i `MyNextMovieTests/` trafiają do projektu same.
@@ -33,41 +32,16 @@ Testy są dwojakie:
 - **gotowe**. Na starcie część z nich nie przechodzi. Przejdą, gdy uzupełnisz kod.
 - **do napisania**. Mają `@Test(.disabled(...))` i pustą treść. Komentarz nad testem mówi, co sprawdzić. Napisz test i usuń `.disabled(...)`.
 
-Laboratorium jest skończone, gdy `make check` przechodzi i żaden test nie jest pominięty.
-
-## Formatowanie i lint
-
-Kod ma się budować **bez żadnych ostrzeżeń**.
-
-Reguły formatowania są w pliku `.swift-format`. Narzędzie `swift-format` jest wbudowane w Xcode, niczego nie instalujesz.
-
-- W Xcode formatujesz plik skrótem ⌃⇧I (Editor, Structure, Format File with 'swift-format').
-- Każdy build uruchamia `scripts/lint.sh`. Uwagi, także o zbyt głębokich wcięciach, widzisz w Xcode jako ostrzeżenia.
-- Na GitHubie lint sprawdza każdy push (Actions, Lint).
-- Build w konfiguracji Release traktuje ostrzeżenia jako błędy.
-
-Z terminala:
-
-```sh
-make format   # formatuje wszystkie pliki
-make lint     # formatowanie, reguły i limit wcięć
-make build    # build Debug, ostrzeżenia są błędami
-make release  # build Release, ostrzeżenia są błędami
-make analyze  # statyczny analizator
-make test     # testy na symulatorze, z pokryciem kodu
-make check    # wszystko poza format, przed pushem
-```
-
-Inny symulator podajesz tak: `make test DESTINATION='platform=iOS Simulator,name=iPhone 16'`.
+Laboratorium jest skończone, gdy build (⌘B) nie ma ostrzeżeń, a testy (⌘U) przechodzą i żaden nie jest pominięty.
 
 ## Konfiguracja Xcode
 
 Ustawienia builda są w plikach `.xcconfig`, a nie w `project.pbxproj`. Łatwo je czytać i porównywać w Git.
 
 ```
-Config/Shared.xcconfig    wspólne dla całego projektu: wersja iOS, Swift 6, podpisywanie
-Config/Debug.xcconfig     szybki build bez optymalizacji
-Config/Release.xcconfig   build z optymalizacją, ostrzeżenia są błędami
+Config/Shared.xcconfig    wspólne dla całego projektu: wersja iOS, Swift 6, podpisywanie, ostrzeżenia są błędami
+Config/Debug.xcconfig     szybki build bez optymalizacji, analizator przy każdym buildzie
+Config/Release.xcconfig   build z optymalizacją
 Config/App.xcconfig       aplikacja: bundle id, Info.plist, klucze API
 Config/Tests.xcconfig     testy jednostkowe
 ```

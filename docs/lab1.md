@@ -55,7 +55,7 @@ Testy do napisania:
 
 ## Koniec zajęć
 
-1. `make check` przechodzi, żaden test nie jest pominięty.
+1. Build (⌘B) bez ostrzeżeń. Testy (⌘U) przechodzą, żaden nie jest pominięty.
 2. Commit i push:
 
 ```sh
