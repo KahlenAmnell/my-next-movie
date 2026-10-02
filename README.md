@@ -19,7 +19,7 @@ MyNextMovie.xctestplan   plan testów
 Config/                  ustawienia builda (.xcconfig), Info.plist
 ```
 
-Architektura: SwiftUI + MVVM. Nowe pliki dodane do folderów `MyNextMovie/` i `MyNextMovieTests/` trafiają do projektu same.
+Architektura: SwiftUI + MVVM. Nowe pliki dodane do folderów `MyNextMovie/` i `MyNextMovieTests/`.
 
 ## Zadania
 
@@ -31,8 +31,6 @@ Testy są dwojakie:
 
 - **gotowe**. Na starcie część z nich nie przechodzi. Przejdą, gdy uzupełnisz kod.
 - **do napisania**. Mają `@Test(.disabled(...))` i pustą treść. Komentarz nad testem mówi, co sprawdzić. Napisz test i usuń `.disabled(...)`.
-
-Laboratorium jest skończone, gdy build (⌘B) nie ma ostrzeżeń, a testy (⌘U) przechodzą i żaden nie jest pominięty.
 
 ## Konfiguracja Xcode
 
@@ -50,10 +48,10 @@ Testy uruchamia plan `MyNextMovie.xctestplan`. Zbiera pokrycie kodu (Report navi
 
 ## Wymagania
 
-- Xcode 26 lub nowszy
-- Konto na GitHubie
-- Konto w TMDB i klucz API
-- Konto w Supabase
+- Xcode
+- GitHub
+- TMDB i klucz API
+- Supabase
 
 ## Start
 
@@ -74,8 +72,6 @@ git push -u origin main
 4. Skopiuj `Config/Secrets.xcconfig.example` jako `Config/Secrets.xcconfig` i wpisz klucze.
 5. Otwórz `MyNextMovie.xcodeproj`, uruchom aplikację (⌘R) i testy (⌘U).
 
-Nie używaj forka. Fork publicznego repozytorium jest zawsze publiczny.
-
 ## Po każdych zajęciach
 
 Wypchnij aktualny postęp na GitHub, nawet jeśli zadanie nie jest skończone:
@@ -86,7 +82,6 @@ git commit -m "feat: lab 2, movie list screen"
 git push
 ```
 
-Postęp sprawdzam w historii repozytorium. Projekt oddany w całości na końcu, bez postępów po drodze, nie zalicza laboratoriów.
 
 ## Nowe laboratoria
 
@@ -111,18 +106,9 @@ supabaseURL()
 supabaseAnonKey()
 ```
 
-Klucz TMDB i klucz `anon` z Supabase mogą być w aplikacji. Klucz dostawcy AI nie. Jego używaj tylko po stronie serwera, np. w Supabase Edge Function.
-
-Na własnym iPhonie zmień `PRODUCT_BUNDLE_IDENTIFIER` w `Config/App.xcconfig` na swój i wybierz swój zespół w Signing & Capabilities. Symulator działa bez zmian.
-
 ## Oddanie projektu
 
 Na koniec semestru oddajesz ZIP z kodem na Moodle.
-
-Do zaliczenia laboratoriów potrzebne są oba warunki:
-
-- postęp wypchnięty po każdych zajęciach,
-- ZIP z kodem na Moodle.
 
 ## Dokumentacja
 
