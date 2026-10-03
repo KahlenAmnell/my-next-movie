@@ -14,8 +14,8 @@ git pull upstream main
 git push
 ```
 
-3. Uruchom aplikację (Cmd+R). Wygląda tak samo jak po lab 1. Zakładka Search pojawi się dopiero po zadaniu 2.
-4. Uruchom testy (Cmd+U). Część nowych testów nie przechodzi, część jest pominięta. Tak ma być.
+3. Uruchom aplikację (⌘R). Wygląda tak samo jak po lab 1. Zakładka Search pojawi się dopiero po zadaniu 2.
+4. Uruchom testy (⌘U). Część nowych testów nie przechodzi, część jest pominięta. Tak ma być.
 
 ## Nowe pliki
 
@@ -34,7 +34,7 @@ MyNextMovie/Services/SampleMovies.swift  nowa funkcja searchSampleMovies
 MyNextMovie/MyNextMovieApp.swift         miejsce na zakładkę Search
 ```
 
-Miejsca do uzupełnienia znajdziesz w Xcode: Find Navigator (Cmd+Shift+F), szukaj `TODO: Lab 2`.
+Miejsca do uzupełnienia znajdziesz w Xcode: Find Navigator (⌘⇧F), szukaj `TODO: Lab 2`.
 
 ## Jak to działa
 
@@ -106,7 +106,7 @@ Teraz widoki w `Views/SearchView.swift`:
 3. `SearchResults`: lista wyników albo komunikat "brak wyników". Gotowy komunikat to `ContentUnavailableView.search(text:)`.
 4. `SearchResultRow`: mały plakat po lewej, tytuł, rok z gatunkiem i ocena po prawej. Kliknięcie otwiera szczegóły filmu, tak jak w siatce z lab 1.
 
-Sprawdzaj każdy widok w podglądzie (Canvas, Cmd+Option+Enter) w `SearchView.swift`. Podgląd używa przykładowych filmów.
+Sprawdzaj każdy widok w podglądzie (Canvas, ⌥⌘↩) w `SearchView.swift`. Podgląd używa przykładowych filmów.
 
 Sprawdź w aplikacji:
 
@@ -119,7 +119,7 @@ Sprawdź w aplikacji:
 
 ## Koniec zajęć
 
-1. Build (Cmd+B) bez ostrzeżeń. Testy (Cmd+U) przechodzą, żaden nie jest pominięty.
+1. Build (⌘B) bez ostrzeżeń. Testy (⌘U) przechodzą, żaden nie jest pominięty.
 2. Commit i push:
 
 ```sh
