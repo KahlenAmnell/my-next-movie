@@ -69,15 +69,20 @@ private struct BlurredPoster: View {
 private struct MovieInfo: View {
     let movie: Movie
 
-    // TODO: Lab 1, task 2. A `VStack(alignment: .leading, spacing: spacingLarge)` with:
-    // - `heading`: a `VStack(alignment: .leading, spacing: spacingSmall)` with
-    //   `Text(movie.title)` in `.system(.largeTitle, design: .serif, weight: .bold)`
-    //   and `Text(yearAndRating(movie))` in `.subheadline`, `.secondary`,
-    // - `GenreRow(genreIds: knownGenreIds(movie))`,
-    // - `overview`: the header `Text("Overview")` in `.headline`
-    //   and `Text(movie.overview)` in `.secondary` under it.
     var body: some View {
-        Text(movie.title)
+        VStack(alignment: .leading, spacing: spacingLarge) {
+            VStack(alignment: .leading, spacing: spacingSmall) {
+                Text(movie.title).font(.system(.largeTitle, design: .serif, weight: .bold))
+                Text(yearAndRating(movie)).font(.subheadline).foregroundColor(.secondary)
+            }
+
+            GenreRow(genreIds: knownGenreIds(movie))
+
+            VStack(alignment: .leading, spacing: spacingSmall) {
+                Text("Overview").font(.headline)
+                Text(movie.overview).foregroundColor(.secondary)
+            }
+        }
     }
 }
 
@@ -85,15 +90,17 @@ private struct MovieInfo: View {
 private struct GenreRow: View {
     let genreIds: [Int]
 
-    // TODO: Lab 1, task 2. A `ScrollView(.horizontal, showsIndicators: false)` with
-    // an `HStack(spacing: spacingSmall)` inside. In the `HStack`, a `ForEach(genreIds, id: \.self)`
-    // draws a `GenreChip(genreId:)` for every id. `Int` is not `Identifiable`, hence `id: \.self`.
-    // Add `.scrollClipDisabled()` so the chips are not cut at the screen edge.
     var body: some View {
-        EmptyView()
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: spacingSmall) {
+                ForEach(genreIds, id: \.self) {
+                    genreId in GenreChip(genreId: genreId)
+                }
+            }
+        }
+        .scrollClipDisabled()
     }
 }
-
 #Preview {
     NavigationStack {
         MovieDetailView(movie: sampleMovies[0])

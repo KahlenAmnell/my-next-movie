@@ -73,52 +73,64 @@ private func searchInputKey(_ query: String, _ selectedGenreId: Int) -> String {
 private struct GenreFilter: View {
     let selectedGenreId: Int
     let toggleGenre: (Int) -> Void
-
-    // TODO: Lab 2, task 2. Like `GenreRow` in `MovieDetailView`:
-    // a `ScrollView(.horizontal, showsIndicators: false)` with an `HStack(spacing: spacingSmall)`
-    // and `ForEach(genreTable)` inside. `Genre` is `Identifiable`, so no `id:` is needed.
-    // Give the `HStack` `.padding(.horizontal)` and `.padding(.vertical, spacingSmall)`.
-    // Draw every chip with `genreFilterChip(genre.id)`.
+    
     var body: some View {
-        EmptyView()
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: spacingSmall) {
+                ForEach(genreTable) {
+                    genre in genreFilterChip(genre.id)
+                }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, spacingSmall)
+        }
     }
-
-    // TODO: Lab 2, task 2. A `Button` that calls `toggleGenre(genreId)`, with
-    // `GenreChip(genreId:isSelected:)` as its label. The chip is selected when
-    // `genreId == selectedGenreId`. Add `.buttonStyle(.plain)`.
+    
     private func genreFilterChip(_ genreId: Int) -> some View {
-        GenreChip(genreId: genreId)
+        Button {
+            toggleGenre(genreId)
+        } label: {
+            GenreChip(genreId: genreId, isSelected: genreId == selectedGenreId)
+        }
+        .buttonStyle(.plain)
     }
 }
+
 
 /// Found movies as a list, or a "no results" message when nothing matches.
 private struct SearchResults: View {
     let movies: [Movie]
     let query: String
 
-    // TODO: Lab 2, task 2. When `movies` is empty, show `ContentUnavailableView.search(text: query)`.
-    // Otherwise a `List(movies)` with a `SearchResultRow` for every movie and `.listStyle(.plain)`.
-    // An `if` in `body` needs `@ViewBuilder`, as `content` in `SearchView` has.
+    @ViewBuilder
     var body: some View {
-        Text("\(movies.count) movies, build the list here")
+        if movies.isEmpty {
+            ContentUnavailableView.search(text: query)
+        } else {
+            List(movies) { movie in
+                SearchResultRow(movie: movie)
+            }
+            .listStyle(.plain)
+        }
     }
 }
 
 /// One found movie: a small poster on the left, the title, subtitle and rating on the right.
-/// Tapping it opens the movie details.
 private struct SearchResultRow: View {
     let movie: Movie
 
-    // TODO: Lab 2, task 2. A `NavigationLink(value: movie)` with an `HStack(spacing: spacingMedium)`
-    // of `thumbnail` and `details`, and `.padding(.vertical, spacingExtraSmall)` on the `HStack`.
-    // - `thumbnail`: `PosterView(movie:cornerRadius:)` with `thumbnailCornerRadius`,
-    //   `.frame(width: searchResultThumbnailWidth)`,
-    // - `details`: a `VStack(alignment: .leading, spacing: spacingExtraSmall)` with
-    //   `Text(movie.title)` in `.headline` limited to `searchResultTitleMaxLines`,
-    //   `Text(movieSubtitle(movie))` in `.subheadline` and `Text(ratingWithStar(movie))`
-    //   in `.caption`. Both last texts are `.secondary`.
     var body: some View {
-        Text(movie.title)
+        NavigationLink(value: movie) {
+            HStack(spacing: spacingMedium) {
+                PosterView(movie: movie, cornerRadius: thumbnailCornerRadius).frame(width: searchResultThumbnailWidth)
+                VStack(alignment: .leading, spacing: spacingExtraSmall) {
+                    Text(movie.title).font(.headline).lineLimit(searchResultTitleMaxLines)
+                    Text(movieSubtitle(movie)).font(.subheadline).foregroundColor(.secondary)
+                    Text(ratingWithStar(movie)).font(.caption).foregroundColor(.secondary)
+                }
+            }
+            .padding(.vertical, spacingExtraSmall)
+        }
     }
 }
 

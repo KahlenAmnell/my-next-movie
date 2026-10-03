@@ -19,8 +19,7 @@ struct MovieCardView: View {
     private var poster: some View {
         PosterView(movie: movie)
             .overlay(alignment: .topTrailing) {
-                RatingBadge(movie: movie)
-                    .padding(spacingSmall)
+                RatingBadge(movie: movie).padding(spacingSmall)
             }
             .shadow(color: cardShadowColor, radius: cardShadowRadius, x: 0, y: cardShadowOffset)
     }
