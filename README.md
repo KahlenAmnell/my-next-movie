@@ -97,6 +97,82 @@ git push
 
 Jeśli Git zgłosi konflikt, popraw zaznaczone pliki, potem `git add` i `git commit`.
 
+## Gdy `git pull upstream main` nie działa
+
+Sprawdź, jakie repozytoria zna Twój projekt:
+
+```sh
+git remote -v
+```
+
+Poprawnie wygląda to tak:
+
+```
+origin    https://github.com/TWOJ_LOGIN/my-next-movie.git
+upstream  https://github.com/fwsoft/my-next-movie.git
+```
+
+Jeśli jest inaczej, znajdź swój przypadek poniżej.
+
+### Klon repozytorium przedmiotu bez zmiany `origin`
+
+`origin` wskazuje na `fwsoft/my-next-movie`, a `upstream` nie ma. Na GitHubie utwórz **puste, prywatne** repozytorium `my-next-movie`, bez README i bez `.gitignore`. Potem:
+
+```sh
+git remote rename origin upstream
+git remote add origin https://github.com/TWOJ_LOGIN/my-next-movie.git
+git pull upstream main
+git push -u origin main
+```
+
+Dodaj prowadzącego w Settings, Collaborators.
+
+### Fork
+
+`origin` wskazuje na Twojego forka, a `upstream` nie ma. Dodaj go:
+
+```sh
+git remote add upstream https://github.com/fwsoft/my-next-movie.git
+git pull upstream main
+git push
+```
+
+Fork publicznego repozytorium jest publiczny. Żeby mieć prywatne, utwórz na GitHubie puste, prywatne repozytorium i ustaw je jako `origin`:
+
+```sh
+git remote set-url origin https://github.com/TWOJ_LOGIN/my-next-movie.git
+git push -u origin main
+```
+
+### ZIP albo folder bez Gita
+
+`git remote -v` zgłasza błąd `not a git repository`. Najprościej zacząć od nowa i przenieść swoją pracę:
+
+1. Zmień nazwę starego folderu, np. na `my-next-movie-old`.
+2. Wykonaj kroki z sekcji **Start**. Dostaniesz nowy folder z aktualnymi materiałami.
+3. Skopiuj ze starego folderu do nowego pliki, które zmieniasz w zadaniach. Nadpisz nimi nowe wersje. Po lab 1 są to:
+
+```
+MyNextMovie/Models/Movie.swift
+MyNextMovie/Models/Genres.swift
+MyNextMovie/Views/MovieCardView.swift
+MyNextMovie/Views/MovieListView.swift
+MyNextMovie/Views/MovieDetailView.swift
+MyNextMovieTests/MovieTests.swift
+MyNextMovieTests/MovieListViewModelTests.swift
+```
+
+4. Skopiuj `Config/Secrets.xcconfig`, jeśli go masz.
+5. Uruchom aplikację i testy. Potem commit i push:
+
+```sh
+git add .
+git commit -m "feat: lab 1, movie grid and details"
+git push
+```
+
+Nie kopiuj całego folderu `MyNextMovie/`. Stare wersje nadpiszą pliki, które zmieniły się w kolejnych laboratoriach.
+
 ## Klucze API
 
 Klucze wpisujesz w `Config/Secrets.xcconfig`. Ten plik jest w `.gitignore` i nie trafia do repozytorium.
