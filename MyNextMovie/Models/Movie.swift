@@ -30,8 +30,8 @@ nonisolated struct Movie: Identifiable, Hashable, Codable {
 /// "1999-03-31" -> "1999", empty when the date is unknown.
 func releaseYear(_ movie: Movie) -> String {
     guard movie.releaseDate.count >= releaseYearLength else {
-            return ""
-        }
+        return ""
+    }
     return String(movie.releaseDate.prefix(releaseYearLength))
 }
 
@@ -49,7 +49,7 @@ func ratingWithStar(_ movie: Movie) -> String {
 func yearAndRating(_ movie: Movie) -> String {
     let year = releaseYear(movie)
     let rating = ratingWithStar(movie)
-    
+
     if year.isEmpty {
         return rating
     }

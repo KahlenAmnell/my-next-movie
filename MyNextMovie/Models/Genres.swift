@@ -105,16 +105,16 @@ func mainGenreId(_ movie: Movie) -> Int {
 /// "1999" when the main genre is unknown, "Action" when the year is unknown, "" without both.
 func movieSubtitle(_ movie: Movie) -> String {
     var parts: [String] = []
-        
-        let year = releaseYear(movie)
-        if !year.isEmpty {
-            parts.append(year)
-        }
-        
-        let mainId = mainGenreId(movie)
-        if mainId != noGenreId {
-            parts.append(genreName(mainId))
-        }
-        
-        return parts.joined(separator: textSeparator)
+
+    let year = releaseYear(movie)
+    if !year.isEmpty {
+        parts.append(year)
+    }
+
+    let mainId = mainGenreId(movie)
+    if mainId != noGenreId {
+        parts.append(genreName(mainId))
+    }
+
+    return parts.joined(separator: textSeparator)
 }

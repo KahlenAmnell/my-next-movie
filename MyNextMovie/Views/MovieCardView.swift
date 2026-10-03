@@ -15,7 +15,7 @@ struct MovieCardView: View {
             caption
         }
     }
-    
+
     private var poster: some View {
         PosterView(movie: movie)
             .overlay(alignment: .topTrailing) {
@@ -24,13 +24,13 @@ struct MovieCardView: View {
             }
             .shadow(color: cardShadowColor, radius: cardShadowRadius, x: 0, y: cardShadowOffset)
     }
-    
+
     private var caption: some View {
         VStack(alignment: .leading, spacing: spacingTiny) {
             Text(movie.title)
                 .font(.subheadline.weight(.semibold))
                 .lineLimit(cardTextMaxLines)
-            
+
             Text(movieSubtitle(movie))
                 .font(.caption)
                 .foregroundColor(.secondary)
