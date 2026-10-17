@@ -19,7 +19,7 @@ func filterMovies(_ movies: [Movie], query: String, genreId: Int) -> [Movie] {
 }
 
 private func movieContainsText(_ movie: Movie, _ searchedText: String) -> Bool {
-    if textContains(movie.title, searchedText) || textContains(movie.overview, searchedText) {
+    if textContains(movie.title, searchedText) || textContains(movie.overview ?? "", searchedText) {
         return true
     }
     return false

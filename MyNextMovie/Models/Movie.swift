@@ -20,7 +20,7 @@ let textSeparator = " · "
 nonisolated struct Movie: Identifiable, Hashable, Codable {
     let id: Int
     let title: String
-    let overview: String
+    let overview: String?
     let releaseDate: String  // "1999-03-31", empty when unknown
     let posterPath: String?  // nil when TMDB has no poster
     let voteAverage: Double

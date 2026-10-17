@@ -80,7 +80,7 @@ private struct MovieInfo: View {
 
             VStack(alignment: .leading, spacing: spacingSmall) {
                 Text("Overview").font(.headline)
-                Text(movie.overview).foregroundColor(.secondary)
+                Text(movie.overview ?? "").foregroundColor(.secondary)
             }
         }
     }
