@@ -19,13 +19,13 @@ struct MovieDetailSections: View {
                     .cornerRadius(10)
                 }
             }
-
+            
             if let cast = details.credits?.cast, !cast.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Cast")
                         .font(.title2)
                         .bold()
-
+                    
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(alignment: .top, spacing: 16) {
                             ForEach(cast.prefix(15)) { member in
@@ -70,14 +70,14 @@ struct MovieDetailSections: View {
                     }
                 }
             }
-
+            
             let providers = watchProviders(details, regionCode: watchRegionCode)
             if hasWatchProviders(providers) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Where to Watch")
                         .font(.title2)
                         .bold()
-
+                    
                     if let flatrate = providers.flatrate, !flatrate.isEmpty {
                         providerGroup(title: "Stream", providers: flatrate)
                     }
@@ -87,19 +87,19 @@ struct MovieDetailSections: View {
                     if let buy = providers.buy, !buy.isEmpty {
                         providerGroup(title: "Buy", providers: buy)
                     }
-
+                    
                     Text("Streaming data from JustWatch")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
             }
-
+            
             if let recommendations = details.recommendations?.results, !recommendations.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("More Like This")
                         .font(.title2)
                         .bold()
-
+                    
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 16) {
                             ForEach(recommendations) { movie in
@@ -114,14 +114,14 @@ struct MovieDetailSections: View {
         }
         .padding(.horizontal)
     }
-
+    
     @ViewBuilder
     private func providerGroup(title: String, providers: [WatchProvider]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-
+            
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(providers) { provider in

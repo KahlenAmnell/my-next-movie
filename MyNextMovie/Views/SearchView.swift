@@ -9,11 +9,11 @@ private let searchInputKeySeparator = "|"
 
 struct SearchView: View {
     @State private var viewModel: SearchViewModel
-
+    
     init(viewModel: SearchViewModel) {
         _viewModel = State(initialValue: viewModel)
     }
-
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -28,11 +28,11 @@ struct SearchView: View {
             }
         }
     }
-
+    
     private var genreFilter: some View {
         GenreFilter(selectedGenreId: viewModel.selectedGenreId, toggleGenre: viewModel.toggleGenre)
     }
-
+    
     @ViewBuilder
     private var content: some View {
         switch viewModel.state {
@@ -52,7 +52,7 @@ struct SearchView: View {
             }
         }
     }
-
+    
     /// Waits until the user stops typing. Every keystroke cancels the previous wait.
     private func searchAfterPause() async {
         try? await Task.sleep(for: searchDelayAfterTyping)
@@ -101,7 +101,7 @@ private struct GenreFilter: View {
 private struct SearchResults: View {
     let movies: [Movie]
     let query: String
-
+    
     @ViewBuilder
     var body: some View {
         if movies.isEmpty {
@@ -118,7 +118,7 @@ private struct SearchResults: View {
 /// One found movie: a small poster on the left, the title, subtitle and rating on the right.
 private struct SearchResultRow: View {
     let movie: Movie
-
+    
     var body: some View {
         NavigationLink(value: movie) {
             HStack(spacing: spacingMedium) {

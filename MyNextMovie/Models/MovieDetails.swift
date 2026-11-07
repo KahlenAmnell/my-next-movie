@@ -1,6 +1,6 @@
 import Foundation
 
-struct MovieDetails: Codable, Sendable {
+nonisolated struct MovieDetails: Decodable, Sendable {
     let id: Int
     let tagline: String?
     let runtime: Int?
@@ -22,12 +22,12 @@ struct MovieDetails: Codable, Sendable {
     }
 }
 
-struct Credits: Codable, Sendable {
+nonisolated struct Credits: Decodable, Sendable {
     let cast: [CastMember]?
     let crew: [CrewMember]?
 }
 
-struct CastMember: Codable, Identifiable, Sendable {
+nonisolated struct CastMember: Decodable, Identifiable, Sendable {
     let id: Int
     let name: String
     let character: String?
@@ -41,28 +41,28 @@ struct CastMember: Codable, Identifiable, Sendable {
     }
 }
 
-struct CrewMember: Codable, Identifiable, Sendable {
+nonisolated struct CrewMember: Decodable, Sendable {
     let id: Int
     let name: String
     let job: String?
 }
 
-struct VideoList: Codable, Sendable {
+nonisolated struct VideoList: Decodable, Sendable {
     let results: [Video]?
 }
 
-struct Video: Codable, Sendable {
+nonisolated struct Video: Decodable, Sendable {
     let key: String?
     let site: String?
     let type: String?
     let official: Bool?
 }
 
-struct ReleaseDateList: Codable, Sendable {
+nonisolated struct ReleaseDateList: Decodable, Sendable {
     let results: [CountryReleaseDates]?
 }
 
-struct CountryReleaseDates: Codable, Sendable {
+nonisolated struct CountryReleaseDates: Decodable, Sendable {
     let countryCode: String
     let releaseDates: [ReleaseDate]?
 
@@ -72,22 +72,22 @@ struct CountryReleaseDates: Codable, Sendable {
     }
 }
 
-struct ReleaseDate: Codable, Sendable {
+nonisolated struct ReleaseDate: Decodable, Sendable {
     let certification: String?
 }
 
-struct WatchProviderList: Codable, Sendable {
+nonisolated struct WatchProviderList: Decodable, Sendable {
     let results: [String: CountryWatchProviders]?
 }
 
-struct CountryWatchProviders: Codable, Sendable {
+nonisolated struct CountryWatchProviders: Decodable, Sendable {
     let link: String?
     let flatrate: [WatchProvider]?
     let rent: [WatchProvider]?
     let buy: [WatchProvider]?
 }
 
-struct WatchProvider: Codable, Identifiable, Sendable {
+nonisolated struct WatchProvider: Decodable, Identifiable, Sendable {
     let providerId: Int
     let providerName: String
     let logoPath: String?
@@ -150,11 +150,12 @@ func directorNames(_ details: MovieDetails) -> String {
 func ageCertification(_ details: MovieDetails, regionCode: String) -> String {
     guard let results = details.releaseDates?.results else { return "" }
     if let countryRelease = results.first(where: { $0.countryCode == regionCode }),
-       let dates = countryRelease.releaseDates {
-        for date in dates {
-            if let cert = date.certification, !cert.isEmpty {
-                return cert
-            }
+
+        let dates = countryRelease.releaseDates {
+            for date in dates {
+                if let cert = date.certification, !cert.isEmpty {
+                    return cert
+                }
         }
     }
     return ""
@@ -163,7 +164,7 @@ func ageCertification(_ details: MovieDetails, regionCode: String) -> String {
 func trailerKey(_ details: MovieDetails) -> String {
     guard let videos = details.videos?.results else { return "" }
     let youtubeVideos = videos.filter { $0.site == "YouTube" && $0.type == "Trailer" }
-    
+
     if let official = youtubeVideos.first(where: { $0.official == true }), let key = official.key {
         return key
     }
@@ -185,34 +186,35 @@ func hasTrailer(_ details: MovieDetails) -> Bool {
 
 func movieFactsLine(_ movie: Movie, _ details: MovieDetails, regionCode: String) -> String {
     var components: [String] = []
-    
-    if let releaseDate = movie.releaseDate, releaseDate.count >= 4 {
-        let year = String(releaseDate.prefix(4))
+
+    if movie.releaseDate.count >= 4 {
+        let year = String(movie.releaseDate.prefix(4))
         components.append(year)
     }
-    if let rating = movie.voteAverage, rating > 0 {
+    let rating = movie.voteAverage
+    if rating > 0 {
         let formattedRating = String(format: "★ %.1f", rating)
         components.append(formattedRating)
     }
-    
+
     let runtimeStr = formattedRuntime(details)
     if !runtimeStr.isEmpty {
         components.append(runtimeStr)
     }
-    
+
     let certStr = ageCertification(details, regionCode: regionCode)
     if !certStr.isEmpty {
         components.append(certStr)
     }
-    
+
     return components.joined(separator: " · ")
 }
 
 func watchProviders(_ details: MovieDetails, regionCode: String) -> CountryWatchProviders {
     guard let providersResults = details.watchProviders?.results,
-          let countryProviders = providersResults[regionCode] else {
-        return noWatchProviders
-    }
+        let countryProviders = providersResults[regionCode] else {
+            return noWatchProviders
+        }
     return countryProviders
 }
 

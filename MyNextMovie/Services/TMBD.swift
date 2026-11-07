@@ -25,10 +25,24 @@ nonisolated struct TMDBMoviePage: Decodable, Sendable {
 typealias TMDBMovieResponse = TMDBMoviePage
 typealias TMDBMovie = Movie
 
-nonisolated struct TMDBError: LocalizedError {
-    let message: String
+nonisolated enum TMDBError: LocalizedError {
+    case message(String)
+    case invalidURL
+    case requestFailed(statusCode: Int?)
+
     var errorDescription: String? {
-        return message
+        switch self {
+        case .message(let text):
+            return text
+        case .invalidURL:
+            return "Invalid URL generated for TMDB request."
+        case .requestFailed(let statusCode):
+            if let code = statusCode {
+                return "Server returned unexpected status code: \(code)"
+            } else {
+                return "Request failed."
+            }
+        }
     }
 }
 
@@ -94,12 +108,12 @@ func filterTMDBMovies(_ movies: [Movie], query: String, genreId: Int) -> [Movie]
 
 func checkTMDBResponse(_ response: URLResponse) throws {
     guard let httpResponse = response as? HTTPURLResponse else { return }
-    
+
     if httpResponse.statusCode == TMDBAPI.httpStatusUnauthorized {
-        throw TMDBError(message: "Missing TMDB API key. Add it to Config/Secrets.xcconfig.")
+        throw TMDBError.message("Missing TMDB API key. Add it to Config/Secrets.xcconfig.")
     }
     guard httpResponse.statusCode == TMDBAPI.httpStatusOK else {
-        throw TMDBError(message: "Server returned unexpected status code: \(httpResponse.statusCode)")
+        throw TMDBError.requestFailed(statusCode: httpResponse.statusCode)
     }
 }
 
@@ -109,21 +123,25 @@ protocol URLSessionProtocol {
 
 extension URLSession: URLSessionProtocol {}
 
-private func fetchTMDBData(_ address: URL?, session: URLSessionProtocol = URLSession.shared) async throws -> Data {
+private func fetchTMDBData(
+    _ address: URL?, session: URLSessionProtocol = URLSession.shared
+)
+
+async throws -> Data {
     guard let url = address else {
-        throw TMDBError(message: "Invalid URL generated for TMDB request.")
+        throw TMDBError.invalidURL
     }
-    
+
     let (data, response) = try await session.data(from: url)
     try checkTMDBResponse(response)
-    
+
     return data
 }
 
 func fetchPopularMovies() async throws -> [Movie] {
     let apiKey = tmdbAPIKey()
     guard !apiKey.isEmpty else {
-        throw TMDBError(message: "Missing TMDB API key. Add it to Config/Secrets.xcconfig.")
+        throw TMDBError.message("Missing TMDB API key. Add it to Config/Secrets.xcconfig.")
     }
     let url = tmdbPopularURL(apiKey: apiKey)
     let data = try await fetchTMDBData(url)
@@ -133,15 +151,14 @@ func fetchPopularMovies() async throws -> [Movie] {
 func searchTMDBMovies(query: String, genreId: Int) async throws -> [Movie] {
     let apiKey = tmdbAPIKey()
     guard !apiKey.isEmpty else {
-        throw TMDBError(message: "Missing TMDB API key. Add it to Config/Secrets.xcconfig.")
+        throw TMDBError.message("Missing TMDB API key. Add it to Config/Secrets.xcconfig.")
     }
-    
+
     let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
     let url = tmdbSearchURL(query: trimmedQuery, genreId: genreId, apiKey: apiKey)
     let data = try await fetchTMDBData(url)
     let movies = try decodeTMDBMovies(data)
-    
-    return filterMovies(movies, query: trimmedQuery, genreId: genreId)
+    return filterTMDBMovies(movies, query: "", genreId: genreId)
 }
 
 func tmdbMovieDetailsURL(movieId: Int, apiKey: String) -> URL? {
@@ -160,12 +177,16 @@ func decodeTMDBMovieDetails(_ data: Data) throws -> MovieDetails {
 }
 
 func fetchMovieDetails(movieId: Int) async throws -> MovieDetails {
-    guard let url = tmdbMovieDetailsURL(movieId: movieId, apiKey: tmdbApiKey) else {
+    let apiKey = tmdbAPIKey()
+    guard !apiKey.isEmpty else {
+        throw TMDBError.message("Missing TMDB API key. Add it to Config/Secrets.xcconfig.")
+    }
+    guard let url = tmdbMovieDetailsURL(movieId: movieId, apiKey: apiKey) else {
         throw TMDBError.invalidURL
     }
     let (data, response) = try await URLSession.shared.data(from: url)
     guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-        throw TMDBError.requestFailed
+        throw TMDBError.requestFailed(statusCode: (response as? HTTPURLResponse)?.statusCode)
     }
     return try decodeTMDBMovieDetails(data)
 }

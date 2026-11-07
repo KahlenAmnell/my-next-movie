@@ -9,24 +9,52 @@ private let posterShadowOffset: CGFloat = 10
 
 struct MovieDetailView: View {
     let movie: Movie
-
+    @State private var viewModel: MovieDetailViewModel
+    init(movie: Movie, loadDetails: @escaping MovieDetailsLoader = { _ in
+        MovieDetails(id: 0, tagline: nil, runtime: nil, credits: nil, videos: nil, releaseDates: nil, watchProviders: nil, recommendations: nil)
+    }) {
+        self.movie = movie
+        _viewModel = State(wrappedValue: MovieDetailViewModel(movieId: movie.id, loadDetails: loadDetails))
+    }
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: spacingExtraLarge) {
                 MovieBackdrop(movie: movie)
-                MovieInfo(movie: movie).padding(.horizontal)
+                
+                VStack(alignment: .leading, spacing: spacingLarge) {
+                    MovieInfo(movie: movie, details: viewModel.details)
+                    
+                    switch viewModel.state {
+                    case .idle, .loading:
+                        ProgressView()
+                    case .loaded:
+                        MovieDetailSections(details: viewModel.details)
+                    case .failed:
+                        VStack(spacing: 8) {
+                            Text("Failed to load details.")
+                            Button("Try again") {
+                                Task { await viewModel.loadIfNeeded() }
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal)
             }
             .padding(.bottom, spacingHuge)
         }
         .ignoresSafeArea(edges: .top)
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await viewModel.loadIfNeeded()
+        }
     }
 }
 
 /// The poster, sharp, on top of itself stretched to the screen width and blurred.
 private struct MovieBackdrop: View {
     let movie: Movie
-
+    
     var body: some View {
         GeometryReader { geometry in
             BlurredPoster(movie: movie, backdropSize: geometry.size)
@@ -36,7 +64,7 @@ private struct MovieBackdrop: View {
         .overlay { fadeToBackground }
         .overlay(alignment: .bottom) { sharpPoster }
     }
-
+    
     private var fadeToBackground: some View {
         LinearGradient(
             colors: [.clear, Color(.systemBackground)],
@@ -44,7 +72,7 @@ private struct MovieBackdrop: View {
             endPoint: .bottom
         )
     }
-
+    
     private var sharpPoster: some View {
         PosterView(movie: movie)
             .frame(width: posterWidthOnBackdrop)
@@ -55,7 +83,7 @@ private struct MovieBackdrop: View {
 private struct BlurredPoster: View {
     let movie: Movie
     let backdropSize: CGSize
-
+    
     var body: some View {
         PosterView(movie: movie, cornerRadius: 0)
             .frame(width: backdropSize.width)
@@ -68,16 +96,17 @@ private struct BlurredPoster: View {
 /// Title, year and rating, genres and overview under the backdrop.
 private struct MovieInfo: View {
     let movie: Movie
-
+    var details: MovieDetails? // Dodaj tę właściwość, jeśli MovieInfo jej oczekuje
+    
     var body: some View {
         VStack(alignment: .leading, spacing: spacingLarge) {
             VStack(alignment: .leading, spacing: spacingSmall) {
                 Text(movie.title).font(.system(.largeTitle, design: .serif, weight: .bold))
                 Text(yearAndRating(movie)).font(.subheadline).foregroundColor(.secondary)
             }
-
+            
             GenreRow(genreIds: knownGenreIds(movie))
-
+            
             VStack(alignment: .leading, spacing: spacingSmall) {
                 Text("Overview").font(.headline)
                 Text(movie.overview ?? "").foregroundColor(.secondary)
@@ -89,18 +118,19 @@ private struct MovieInfo: View {
 /// Genre chips in one row that scrolls sideways when they do not fit.
 private struct GenreRow: View {
     let genreIds: [Int]
-
+    
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: spacingSmall) {
-                ForEach(genreIds, id: \.self) {
-                    genreId in GenreChip(genreId: genreId)
+                ForEach(genreIds, id: \.self) { genreId in
+                    GenreChip(genreId: genreId)
                 }
             }
         }
         .scrollClipDisabled()
     }
 }
+
 #Preview {
     NavigationStack {
         MovieDetailView(movie: sampleMovies[0])
