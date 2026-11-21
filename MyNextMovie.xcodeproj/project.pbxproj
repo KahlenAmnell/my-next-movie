@@ -17,6 +17,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		59502A9730B1C7E800B24ED8 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
+		59502A9830B1C80A00B24ED8 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		A1000000000000000000F001 /* MyNextMovie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyNextMovie.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000000000000000000F002 /* MyNextMovieTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyNextMovieTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000000000000000000F003 /* App.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = App.xcconfig; sourceTree = "<group>"; };
@@ -26,7 +28,6 @@
 		A1000000000000000000F008 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		A1000000000000000000F009 /* Tests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Tests.xcconfig; sourceTree = "<group>"; };
 		A1000000000000000000F00A /* MyNextMovie.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = MyNextMovie.xctestplan; sourceTree = "<group>"; };
-		B96E1EA5309F63DE0073D8F6 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -83,7 +84,8 @@
 		A1000000000000000000D003 /* Config */ = {
 			isa = PBXGroup;
 			children = (
-				B96E1EA5309F63DE0073D8F6 /* Secrets.xcconfig */,
+				59502A9730B1C7E800B24ED8 /* Secrets.xcconfig */,
+				59502A9830B1C80A00B24ED8 /* Secrets.xcconfig */,
 				A1000000000000000000F006 /* Shared.xcconfig */,
 				A1000000000000000000F007 /* Debug.xcconfig */,
 				A1000000000000000000F008 /* Release.xcconfig */,

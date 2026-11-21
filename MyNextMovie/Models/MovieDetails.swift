@@ -152,10 +152,11 @@ func ageCertification(_ details: MovieDetails, regionCode: String) -> String {
     if let countryRelease = results.first(where: { $0.countryCode == regionCode }),
 
         let dates = countryRelease.releaseDates {
-            for date in dates {
-                if let cert = date.certification, !cert.isEmpty {
-                    return cert
-                }
+
+        for date in dates {
+            if let cert = date.certification, !cert.isEmpty {
+                return cert
+            }
         }
     }
     return ""
@@ -212,9 +213,9 @@ func movieFactsLine(_ movie: Movie, _ details: MovieDetails, regionCode: String)
 
 func watchProviders(_ details: MovieDetails, regionCode: String) -> CountryWatchProviders {
     guard let providersResults = details.watchProviders?.results,
-        let countryProviders = providersResults[regionCode] else {
-            return noWatchProviders
-        }
+          let countryProviders = providersResults[regionCode] else {
+        return noWatchProviders
+    }
     return countryProviders
 }
 

@@ -3,7 +3,7 @@ import XCTest
 
 @MainActor
 final class MovieDetailsDecodingTests: XCTestCase {
-    
+
     let matrixJSON = """
     {
         "id": 603,
