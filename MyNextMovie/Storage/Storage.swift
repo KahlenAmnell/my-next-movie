@@ -85,3 +85,43 @@ private func removeOldSearches(_ context: ModelContext) {
         context.delete(oldEntry)
     }
 }
+
+// MARK: - Response cache
+
+func storeCachedResponse(_ context: ModelContext, key: String, data: Data, now: Date) {
+    if let storedResponse = findCachedResponse(context, key: key) {
+        storedResponse.data = data
+        storedResponse.fetchedAt = now
+    } else {
+        context.insert(CachedResponse(key: key, data: data, fetchedAt: now))
+    }
+}
+
+func cachedResponseData(_ context: ModelContext, key: String) -> Data {
+    return findCachedResponse(context, key: key)?.data ?? Data()
+}
+
+func fetchWithCacheFallback(
+    _ context: ModelContext,
+    key: String,
+    fetch: () async throws -> Data
+) async throws -> Data {
+    do {
+        let freshData = try await fetch()
+        storeCachedResponse(context, key: key, data: freshData, now: .now)
+        return freshData
+    } catch {
+        let cachedData = cachedResponseData(context, key: key)
+        if cachedData.isEmpty {
+            throw error
+        }
+        return cachedData
+    }
+}
+
+private func findCachedResponse(_ context: ModelContext, key: String) -> CachedResponse? {
+    let descriptor = FetchDescriptor<CachedResponse>(
+        predicate: #Predicate { response in response.key == key }
+    )
+    return try? context.fetch(descriptor).first
+}
