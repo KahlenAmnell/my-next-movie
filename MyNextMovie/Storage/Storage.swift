@@ -38,3 +38,50 @@ func movieFromSaved(_ savedMovie: SavedMovie) -> Movie {
 func moviesFromSaved(_ savedMovies: [SavedMovie]) -> [Movie] {
     return savedMovies.map(movieFromSaved)
 }
+
+// MARK: - Search history
+
+let maxSearchHistoryCount = 10
+
+func recordSearch(_ context: ModelContext, query: String, now: Date) {
+    let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmedQuery.isEmpty {
+        return
+    }
+    if let entry = searchHistoryEntry(context, query: trimmedQuery) {
+        entry.searchedAt = now
+    } else {
+        context.insert(SearchHistoryEntry(query: trimmedQuery, searchedAt: now))
+    }
+    removeOldSearches(context)
+}
+
+func recentSearches(_ context: ModelContext) -> [SearchHistoryEntry] {
+    return Array(searchHistoryNewestFirst(context).prefix(maxSearchHistoryCount))
+}
+
+func clearSearchHistory(_ context: ModelContext) {
+    for entry in searchHistoryNewestFirst(context) {
+        context.delete(entry)
+    }
+}
+
+private func searchHistoryEntry(_ context: ModelContext, query: String) -> SearchHistoryEntry? {
+    let descriptor = FetchDescriptor<SearchHistoryEntry>(
+        predicate: #Predicate { entry in entry.query == query }
+    )
+    return try? context.fetch(descriptor).first
+}
+
+private func searchHistoryNewestFirst(_ context: ModelContext) -> [SearchHistoryEntry] {
+    let descriptor = FetchDescriptor<SearchHistoryEntry>(
+        sortBy: [SortDescriptor(\.searchedAt, order: .reverse)]
+    )
+    return (try? context.fetch(descriptor)) ?? []
+}
+
+private func removeOldSearches(_ context: ModelContext) {
+    for oldEntry in searchHistoryNewestFirst(context).dropFirst(maxSearchHistoryCount) {
+        context.delete(oldEntry)
+    }
+}
