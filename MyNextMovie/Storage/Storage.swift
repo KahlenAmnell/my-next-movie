@@ -15,11 +15,23 @@ func isMovieSaved(_ context: ModelContext, movieId: Int) -> Bool {
 func toggleSavedMovie(_ context: ModelContext, _ movie: Movie, now: Date) {
     let savedCopies = fetchSavedMovies(context, movieId: movie.id)
     if savedCopies.isEmpty {
-        context.insert(SavedMovie(movie: movie, savedAt: now))
+        context.insert(SavedMovie(movie: movie, savedAt: now, isInCloud: false))
         return
     }
     for savedCopy in savedCopies {
+        if savedCopy.isInCloud {
+            context.insert(RemovedSavedMovie(movieId: savedCopy.movieId))
+        }
         context.delete(savedCopy)
+    }
+}
+
+func clearSavedMovies(_ context: ModelContext) {
+    for savedMovie in (try? context.fetch(FetchDescriptor<SavedMovie>())) ?? [] {
+        context.delete(savedMovie)
+    }
+    for mark in (try? context.fetch(FetchDescriptor<RemovedSavedMovie>())) ?? [] {
+        context.delete(mark)
     }
 }
 

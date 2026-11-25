@@ -13,7 +13,7 @@ final class SavedMovie {
     var savedAt: Date
     var isInCloud: Bool = false
 
-    init(movie: Movie, savedAt: Date) {
+    init(movie: Movie, savedAt: Date, isInCloud: Bool) {
         self.movieId = movie.id
         self.title = movie.title
         self.overview = movie.overview
@@ -22,6 +22,16 @@ final class SavedMovie {
         self.voteAverage = movie.voteAverage
         self.genreIds = movie.genreIds
         self.savedAt = savedAt
+        self.isInCloud = isInCloud
+    }
+}
+
+@Model
+final class RemovedSavedMovie {
+    @Attribute(.unique) var movieId: Int
+
+    init(movieId: Int) {
+        self.movieId = movieId
     }
 }
 
@@ -51,6 +61,7 @@ final class CachedResponse {
 
 let storedModelTypes: [any PersistentModel.Type] = [
     SavedMovie.self,
+    RemovedSavedMovie.self,
     SearchHistoryEntry.self,
     CachedResponse.self,
 ]
