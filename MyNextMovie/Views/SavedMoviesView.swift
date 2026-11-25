@@ -13,10 +13,12 @@ struct SavedMoviesView: View {
         NavigationStack {
             content
                 .navigationTitle("My Next Movie")
-                .navigationDestination(for: Movie.self) { movie in
-                    MovieDetailView(movie: movie, loadDetails: loadDetails)
-                }
+                .navigationDestination(for: Movie.self) { movie in detailView(movie) }
         }
+    }
+
+    private func detailView(_ movie: Movie) -> some View {
+        MovieDetailView(movie: movie, loadDetails: loadDetails)
     }
 
     @ViewBuilder

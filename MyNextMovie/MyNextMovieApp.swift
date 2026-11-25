@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 @main
@@ -16,26 +17,28 @@ private struct RootView: View {
 
     var body: some View {
         TabView {
-            Tab("Movies", systemImage: symbolNameMovies) {
-                MovieListView(
-                    viewModel: MovieListViewModel(loadMovies: loadPopularMoviesWithCache),
-                    loadDetails: loadDetailsWithCache
-                )
-            }
-
-            Tab("Saved", systemImage: symbolNameSaved) {
-                SavedMoviesView(loadDetails: loadDetailsWithCache)
-            }
-
-            Tab("Search", systemImage: symbolNameSearch, role: .search) {
-                SearchView(
-                    viewModel: SearchViewModel(searchMovies: { query, genreId in
-                        try await searchTMDBMovies(query: query, genreId: genreId)
-                    }),
-                    loadDetails: loadDetailsWithCache
-                )
-            }
+            Tab("Movies", systemImage: symbolNameMovies) { moviesScreen }
+            Tab("Saved", systemImage: symbolNameSaved) { savedScreen }
+            Tab("Search", systemImage: symbolNameSearch, role: .search) { searchScreen }
         }
+    }
+
+    private var moviesScreen: some View {
+        MovieListView(
+            viewModel: MovieListViewModel(loadMovies: loadPopularMoviesWithCache),
+            loadDetails: loadDetailsWithCache
+        )
+    }
+
+    private var savedScreen: some View {
+        SavedMoviesView(loadDetails: loadDetailsWithCache)
+    }
+
+    private var searchScreen: some View {
+        SearchView(
+            viewModel: SearchViewModel(searchMovies: searchTMDBMovies),
+            loadDetails: loadDetailsWithCache
+        )
     }
 
     private func loadPopularMoviesWithCache() async throws -> [Movie] {

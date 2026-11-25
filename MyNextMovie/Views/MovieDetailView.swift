@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 private let backdropHeight: CGFloat = 440

@@ -81,7 +81,11 @@ private struct SearchStartView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \SearchHistoryEntry.searchedAt, order: .reverse)
     private var history: [SearchHistoryEntry]
-    let selectQuery: (String) -> Void
+    private let selectQuery: (String) -> Void
+
+    init(selectQuery: @escaping (String) -> Void) {
+        self.selectQuery = selectQuery
+    }
 
     @ViewBuilder
     var body: some View {
@@ -99,9 +103,7 @@ private struct SearchStartView: View {
     private var historyList: some View {
         List {
             Section {
-                ForEach(history) { entry in
-                    historyRow(entry)
-                }
+                ForEach(history, content: historyRow)
             } header: {
                 historyHeader
             }
