@@ -1,5 +1,9 @@
 import Foundation
 
+let minimumPasswordLength = 6
+let testAccountEmail = "test@test.test"
+let testAccountPassword = "test"
+
 nonisolated struct CloudSavedMovie: Codable, Equatable {
     let id: Int
     let title: String

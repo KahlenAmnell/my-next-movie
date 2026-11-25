@@ -1,9 +1,16 @@
 import Foundation
 
+typealias AccountRequest = (_ email: String, _ password: String) async throws -> String
+
+struct AccountService {
+    var signedInEmail: @MainActor () -> String
+    var signIn: AccountRequest
+    var signUp: AccountRequest
+    var signOut: () async throws -> Void
+}
+
 struct SavedMoviesCloud {
     var fetchMovies: () async throws -> [CloudSavedMovie]
     var uploadMovies: (_ cloudMovies: [CloudSavedMovie]) async throws -> Void
     var removeMovie: (_ movieId: Int) async throws -> Void
 }
-
-// TODO: Lab 5 - AccountRequest and AccountService (account step).
