@@ -49,7 +49,7 @@ struct MovieListView: View {
     }
 }
 
-private struct MovieGrid: View {
+struct MovieGrid: View {
     let title: String
     let movies: [Movie]
 
@@ -88,4 +88,5 @@ private struct MovieGridItem: View {
 
 #Preview {
     MovieListView(viewModel: MovieListViewModel(loadMovies: loadSampleMovies))
+        .modelContainer(for: storedModelTypes, inMemory: true)
 }

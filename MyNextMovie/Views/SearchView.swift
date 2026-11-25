@@ -136,4 +136,5 @@ private struct SearchResultRow: View {
 
 #Preview {
     SearchView(viewModel: SearchViewModel(searchMovies: searchSampleMovies))
+        .modelContainer(for: storedModelTypes, inMemory: true)
 }

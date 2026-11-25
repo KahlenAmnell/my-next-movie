@@ -45,6 +45,11 @@ struct MovieDetailView: View {
         }
         .ignoresSafeArea(edges: .top)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                SaveMovieButton(movie: movie)
+            }
+        }
         .task {
             await viewModel.loadIfNeeded()
         }
@@ -135,4 +140,5 @@ private struct GenreRow: View {
     NavigationStack {
         MovieDetailView(movie: sampleMovies[0])
     }
+    .modelContainer(for: storedModelTypes, inMemory: true)
 }

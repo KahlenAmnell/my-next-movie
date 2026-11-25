@@ -6,6 +6,7 @@ struct MyNextMovieApp: App {
         WindowGroup {
             RootView()
         }
+        .modelContainer(for: storedModelTypes)
     }
 }
 
@@ -17,7 +18,13 @@ private struct RootView: View {
                     try await fetchPopularMovies()
                 }))
             }
-            
+
+            Tab("Saved", systemImage: symbolNameSaved) {
+                SavedMoviesView(loadDetails: { movieId in
+                    try await fetchMovieDetails(movieId: movieId)
+                })
+            }
+
             Tab("Search", systemImage: symbolNameSearch, role: .search) {
                 SearchView(viewModel: SearchViewModel(searchMovies: { query, genreId in
                     try await searchTMDBMovies(query: query, genreId: genreId)
