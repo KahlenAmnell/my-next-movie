@@ -117,3 +117,17 @@ final class AccountViewModel {
         }
     }
 }
+
+func previewAccountViewModel(signedInEmail: String) -> AccountViewModel {
+    let account = AccountService(
+        signedInEmail: { signedInEmail },
+        signIn: { email, _ in email },
+        signUp: { email, _ in email },
+        signOut: {}
+    )
+    return AccountViewModel(
+        account: account,
+        syncSavedMovies: {},
+        clearSavedMovies: {}
+    )
+}
