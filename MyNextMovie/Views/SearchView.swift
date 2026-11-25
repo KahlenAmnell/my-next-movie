@@ -10,9 +10,11 @@ private let searchInputKeySeparator = "|"
 struct SearchView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: SearchViewModel
+    private let loadDetails: MovieDetailsLoader
 
-    init(viewModel: SearchViewModel) {
+    init(viewModel: SearchViewModel, loadDetails: @escaping MovieDetailsLoader) {
         _viewModel = State(initialValue: viewModel)
+        self.loadDetails = loadDetails
     }
 
     var body: some View {
@@ -24,7 +26,9 @@ struct SearchView: View {
             .navigationTitle("Search")
             .searchable(text: $viewModel.query, prompt: "Title or keyword")
             .onSubmit(of: .search) { recordCurrentSearch() }
-            .navigationDestination(for: Movie.self) { movie in MovieDetailView(movie: movie) }
+            .navigationDestination(for: Movie.self) { movie in
+                MovieDetailView(movie: movie, loadDetails: loadDetails)
+            }
             .task(id: searchInputKey(viewModel.query, viewModel.selectedGenreId)) {
                 await searchAfterPause()
             }
@@ -185,6 +189,9 @@ private struct SearchResultRow: View {
 }
 
 #Preview {
-    SearchView(viewModel: SearchViewModel(searchMovies: searchSampleMovies))
-        .modelContainer(for: storedModelTypes, inMemory: true)
+    SearchView(
+        viewModel: SearchViewModel(searchMovies: searchSampleMovies),
+        loadDetails: loadSampleMovieDetails
+    )
+    .modelContainer(for: storedModelTypes, inMemory: true)
 }

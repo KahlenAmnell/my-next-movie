@@ -8,6 +8,20 @@ func searchSampleMovies(query: String, genreId: Int) async throws -> [Movie] {
     return filterMovies(sampleMovies, query: query, genreId: genreId)
 }
 
+/// Details with nothing filled in, for previews that do not need internet.
+func loadSampleMovieDetails(movieId: Int) async throws -> MovieDetails {
+    return MovieDetails(
+        id: movieId,
+        tagline: nil,
+        runtime: nil,
+        credits: nil,
+        videos: nil,
+        releaseDates: nil,
+        watchProviders: nil,
+        recommendations: nil
+    )
+}
+
 let sampleMovies: [Movie] = [
     Movie(
         id: 603,

@@ -4,16 +4,20 @@ private let gridMinimumColumnWidth: CGFloat = 150
 
 struct MovieListView: View {
     @State private var viewModel: MovieListViewModel
+    private let loadDetails: MovieDetailsLoader
 
-    init(viewModel: MovieListViewModel) {
+    init(viewModel: MovieListViewModel, loadDetails: @escaping MovieDetailsLoader) {
         _viewModel = State(initialValue: viewModel)
+        self.loadDetails = loadDetails
     }
 
     var body: some View {
         NavigationStack {
             content
                 .navigationTitle("My Next Movie")
-                .navigationDestination(for: Movie.self) { movie in MovieDetailView(movie: movie) }
+                .navigationDestination(for: Movie.self) { movie in
+                    MovieDetailView(movie: movie, loadDetails: loadDetails)
+                }
         }
         .task { await viewModel.loadIfNeeded() }
     }
@@ -87,6 +91,9 @@ private struct MovieGridItem: View {
 }
 
 #Preview {
-    MovieListView(viewModel: MovieListViewModel(loadMovies: loadSampleMovies))
-        .modelContainer(for: storedModelTypes, inMemory: true)
+    MovieListView(
+        viewModel: MovieListViewModel(loadMovies: loadSampleMovies),
+        loadDetails: loadSampleMovieDetails
+    )
+    .modelContainer(for: storedModelTypes, inMemory: true)
 }

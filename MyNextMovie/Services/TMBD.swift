@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 enum TMDBAPI {
     static let scheme = "https"
@@ -138,13 +139,18 @@ async throws -> Data {
     return data
 }
 
-func fetchPopularMovies() async throws -> [Movie] {
+/// Raw JSON of the popular movies, the part that needs internet.
+func fetchPopularMoviesData() async throws -> Data {
     let apiKey = tmdbAPIKey()
     guard !apiKey.isEmpty else {
         throw TMDBError.message("Missing TMDB API key. Add it to Config/Secrets.xcconfig.")
     }
     let url = tmdbPopularURL(apiKey: apiKey)
-    let data = try await fetchTMDBData(url)
+    return try await fetchTMDBData(url)
+}
+
+func fetchPopularMovies() async throws -> [Movie] {
+    let data = try await fetchPopularMoviesData()
     return try decodeTMDBMovies(data)
 }
 
@@ -176,7 +182,8 @@ func decodeTMDBMovieDetails(_ data: Data) throws -> MovieDetails {
     return try decoder.decode(MovieDetails.self, from: data)
 }
 
-func fetchMovieDetails(movieId: Int) async throws -> MovieDetails {
+/// Raw JSON of the movie details, the part that needs internet.
+func fetchMovieDetailsData(movieId: Int) async throws -> Data {
     let apiKey = tmdbAPIKey()
     guard !apiKey.isEmpty else {
         throw TMDBError.message("Missing TMDB API key. Add it to Config/Secrets.xcconfig.")
@@ -187,6 +194,36 @@ func fetchMovieDetails(movieId: Int) async throws -> MovieDetails {
     let (data, response) = try await URLSession.shared.data(from: url)
     guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
         throw TMDBError.requestFailed(statusCode: (response as? HTTPURLResponse)?.statusCode)
+    }
+    return data
+}
+
+func fetchMovieDetails(movieId: Int) async throws -> MovieDetails {
+    let data = try await fetchMovieDetailsData(movieId: movieId)
+    return try decodeTMDBMovieDetails(data)
+}
+
+// MARK: - Loading with a cache on the device
+
+let popularMoviesCacheKey = "popular"
+
+func movieDetailsCacheKey(movieId: Int) -> String {
+    return "movie/\(movieId)"
+}
+
+/// Like `fetchPopularMovies`, but without internet it uses the last stored answer.
+func loadPopularMovies(cache: ModelContext) async throws -> [Movie] {
+    let data = try await fetchWithCacheFallback(cache, key: popularMoviesCacheKey) {
+        try await fetchPopularMoviesData()
+    }
+    return try decodeTMDBMovies(data)
+}
+
+/// Like `fetchMovieDetails`, but without internet it uses the last stored answer.
+func loadTMDBMovieDetails(movieId: Int, cache: ModelContext) async throws -> MovieDetails {
+    let key = movieDetailsCacheKey(movieId: movieId)
+    let data = try await fetchWithCacheFallback(cache, key: key) {
+        try await fetchMovieDetailsData(movieId: movieId)
     }
     return try decodeTMDBMovieDetails(data)
 }

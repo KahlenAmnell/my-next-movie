@@ -59,6 +59,6 @@ struct SaveMovieButton: View {
 }
 
 #Preview {
-    SavedMoviesView(loadDetails: { movieId in try await fetchMovieDetails(movieId: movieId) })
+    SavedMoviesView(loadDetails: loadSampleMovieDetails)
         .modelContainer(for: storedModelTypes, inMemory: true)
 }
