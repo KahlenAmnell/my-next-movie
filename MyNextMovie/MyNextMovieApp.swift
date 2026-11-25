@@ -10,35 +10,37 @@ struct MyNextMovieApp: App {
         .modelContainer(for: storedModelTypes)
     }
 }
-
-/// Connects the screens to the database: the screens get loaders that already know the context.
 private struct RootView: View {
     @Environment(\.modelContext) private var modelContext
+    @State private var accountViewModel: AccountViewModel?
 
     var body: some View {
-        TabView {
-            Tab("Movies", systemImage: symbolNameMovies) { moviesScreen }
-            Tab("Saved", systemImage: symbolNameSaved) { savedScreen }
-            Tab("Search", systemImage: symbolNameSearch, role: .search) { searchScreen }
+        if let accountViewModel {
+            AppTabs(
+                viewModel: accountViewModel,
+                loadMovies: loadPopularMoviesWithCache,
+                searchMovies: searchTMDBMovies,
+                loadDetails: loadDetailsWithCache
+            )
+        } else {
+            Color.clear.onAppear { accountViewModel = makeAccountViewModel() }
         }
     }
 
-    private var moviesScreen: some View {
-        MovieListView(
-            viewModel: MovieListViewModel(loadMovies: loadPopularMoviesWithCache),
-            loadDetails: loadDetailsWithCache
+    private func makeAccountViewModel() -> AccountViewModel {
+        return AccountViewModel(
+            account: supabaseAccountService,
+            syncSavedMovies: syncWithAccount,
+            clearSavedMovies: clearDevice
         )
     }
 
-    private var savedScreen: some View {
-        SavedMoviesView(loadDetails: loadDetailsWithCache)
+    private func syncWithAccount() async throws {
+        try await syncSavedMovies(modelContext, cloud: supabaseSavedMoviesCloud)
     }
 
-    private var searchScreen: some View {
-        SearchView(
-            viewModel: SearchViewModel(searchMovies: searchTMDBMovies),
-            loadDetails: loadDetailsWithCache
-        )
+    private func clearDevice() {
+        clearSavedMovies(modelContext)
     }
 
     private func loadPopularMoviesWithCache() async throws -> [Movie] {
@@ -47,5 +49,75 @@ private struct RootView: View {
 
     private func loadDetailsWithCache(movieId: Int) async throws -> MovieDetails {
         return try await loadTMDBMovieDetails(movieId: movieId, cache: modelContext)
+    }
+}
+
+private struct AppTabs: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @Bindable var viewModel: AccountViewModel
+    @Query(filter: #Predicate<SavedMovie> { savedMovie in savedMovie.isInCloud == false })
+    private var unsentMovies: [SavedMovie]
+    @Query private var removedMovies: [RemovedSavedMovie]
+
+    let loadMovies: MovieLoader
+    let searchMovies: MovieSearch
+    let loadDetails: MovieDetailsLoader
+
+    private var unsentChangeCount: Int {
+        return unsentMovies.count + removedMovies.count
+    }
+
+    var body: some View {
+        content
+            .task { await viewModel.syncSavedMovies() }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    syncNow()
+                }
+            }
+            .onChange(of: unsentChangeCount) { oldCount, newCount in
+                // A drop is the result of a sync, so it needs no further sync.
+                if newCount > oldCount {
+                    syncNow()
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if viewModel.isSignedIn {
+            TabView {
+                Tab("Movies", systemImage: symbolNameMovies) { moviesScreen }
+                Tab("Saved", systemImage: symbolNameSaved) { savedScreen }
+                Tab("Account", systemImage: symbolNameAccount) {
+                    AccountView(viewModel: viewModel)
+                }
+                Tab("Search", systemImage: symbolNameSearch, role: .search) { searchScreen }
+            }
+        } else {
+            SignInView(viewModel: viewModel)
+        }
+    }
+
+    private var moviesScreen: some View {
+        MovieListView(
+            viewModel: MovieListViewModel(loadMovies: loadMovies),
+            loadDetails: loadDetails
+        )
+    }
+
+    private var savedScreen: some View {
+        SavedMoviesView(loadDetails: loadDetails)
+    }
+
+    private var searchScreen: some View {
+        SearchView(
+            viewModel: SearchViewModel(searchMovies: searchMovies),
+            loadDetails: loadDetails
+        )
+    }
+
+    private func syncNow() {
+        Task { await viewModel.syncSavedMovies() }
     }
 }
