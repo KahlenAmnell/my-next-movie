@@ -120,3 +120,63 @@ struct SearchHistoryTests {
         #expect(recentQueries(context).isEmpty)
     }
 }
+
+private let cacheKey = "popular"
+private let oldJSON = Data(#"{"results": []}"#.utf8)
+private let newJSON = Data(#"{"results": [{"id": 1}]}"#.utf8)
+
+private func fetchWithoutConnection() async throws -> Data {
+    throw NoConnection()
+}
+
+@MainActor
+struct ResponseCacheTests {
+    @Test func missingKeyGivesEmptyData() throws {
+        let container = try makeTestContainer()
+        let context = container.mainContext
+
+        #expect(cachedResponseData(context, key: cacheKey) == Data())
+    }
+
+    @Test func storingAgainReplacesData() throws {
+        let container = try makeTestContainer()
+        let context = container.mainContext
+
+        storeCachedResponse(context, key: cacheKey, data: oldJSON, now: minute(1))
+        storeCachedResponse(context, key: cacheKey, data: newJSON, now: minute(2))
+
+        #expect(cachedResponseData(context, key: cacheKey) == newJSON)
+        #expect(try context.fetchCount(FetchDescriptor<CachedResponse>()) == 1)
+    }
+
+    @Test func freshAnswerIsReturnedAndCached() async throws {
+        let container = try makeTestContainer()
+        let context = container.mainContext
+
+        let answer = try await fetchWithCacheFallback(context, key: cacheKey) { newJSON }
+
+        #expect(answer == newJSON)
+        #expect(cachedResponseData(context, key: cacheKey) == newJSON)
+    }
+
+    @Test func cachedAnswerIsReturnedWhenOffline() async throws {
+        let container = try makeTestContainer()
+        let context = container.mainContext
+        storeCachedResponse(context, key: cacheKey, data: oldJSON, now: minute(1))
+
+        let answer = try await fetchWithCacheFallback(
+            context, key: cacheKey, fetch: fetchWithoutConnection)
+
+        #expect(answer == oldJSON)
+    }
+
+    @Test func errorIsRethrownWhenNothingCached() async throws {
+        let container = try makeTestContainer()
+        let context = container.mainContext
+
+        await #expect(throws: NoConnection.self) {
+            try await fetchWithCacheFallback(
+                context, key: cacheKey, fetch: fetchWithoutConnection)
+        }
+    }
+}
