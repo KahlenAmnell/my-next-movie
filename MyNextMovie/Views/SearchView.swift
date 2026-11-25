@@ -1,6 +1,6 @@
+import SwiftData
 import SwiftUI
 
-/// How long to wait after the last keystroke before searching.
 private let searchDelayAfterTyping = Duration.milliseconds(300)
 
 private let searchResultThumbnailWidth: CGFloat = 56
@@ -8,6 +8,7 @@ private let searchResultTitleMaxLines = 2
 private let searchInputKeySeparator = "|"
 
 struct SearchView: View {
+    @Environment(\.modelContext) private var modelContext
     @State private var viewModel: SearchViewModel
 
     init(viewModel: SearchViewModel) {
@@ -22,6 +23,7 @@ struct SearchView: View {
             }
             .navigationTitle("Search")
             .searchable(text: $viewModel.query, prompt: "Title or keyword")
+            .onSubmit(of: .search) { recordCurrentSearch() }
             .navigationDestination(for: Movie.self) { movie in MovieDetailView(movie: movie) }
             .task(id: searchInputKey(viewModel.query, viewModel.selectedGenreId)) {
                 await searchAfterPause()
@@ -37,11 +39,7 @@ struct SearchView: View {
     private var content: some View {
         switch viewModel.state {
         case .idle:
-            ContentUnavailableView(
-                "Find a movie",
-                systemImage: symbolNameSearch,
-                description: Text("Search by title or keyword, or pick a genre.")
-            )
+            SearchStartView(selectQuery: selectQuery)
         case .loading:
             ProgressView()
         case .loaded:
@@ -53,7 +51,15 @@ struct SearchView: View {
         }
     }
 
-    /// Waits until the user stops typing. Every keystroke cancels the previous wait.
+    private func recordCurrentSearch() {
+        recordSearch(modelContext, query: viewModel.query, now: .now)
+    }
+
+    private func selectQuery(_ text: String) {
+        viewModel.query = text
+        recordSearch(modelContext, query: text, now: .now)
+    }
+
     private func searchAfterPause() async {
         try? await Task.sleep(for: searchDelayAfterTyping)
         if Task.isCancelled {
@@ -63,13 +69,60 @@ struct SearchView: View {
     }
 }
 
-/// Changes whenever the search input changes, which restarts the search task.
 private func searchInputKey(_ query: String, _ selectedGenreId: Int) -> String {
     return String(selectedGenreId) + searchInputKeySeparator + query
 }
 
-/// Every genre from `genreTable` as a chip in one row that scrolls sideways.
-/// Tapping a chip selects its genre, tapping it again clears the selection.
+private struct SearchStartView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \SearchHistoryEntry.searchedAt, order: .reverse)
+    private var history: [SearchHistoryEntry]
+    let selectQuery: (String) -> Void
+
+    @ViewBuilder
+    var body: some View {
+        if history.isEmpty {
+            ContentUnavailableView(
+                "Find a movie",
+                systemImage: symbolNameSearch,
+                description: Text("Search by title or keyword, or pick a genre.")
+            )
+        } else {
+            historyList
+        }
+    }
+
+    private var historyList: some View {
+        List {
+            Section {
+                ForEach(history) { entry in
+                    historyRow(entry)
+                }
+            } header: {
+                historyHeader
+            }
+        }
+        .listStyle(.plain)
+    }
+
+    private var historyHeader: some View {
+        HStack {
+            Text("Recent Searches")
+            Spacer()
+            Button("Clear") { clearSearchHistory(modelContext) }
+        }
+    }
+
+    private func historyRow(_ entry: SearchHistoryEntry) -> some View {
+        Button {
+            selectQuery(entry.query)
+        } label: {
+            Label(entry.query, systemImage: symbolNameSearchHistory)
+        }
+        .foregroundStyle(.primary)
+    }
+}
+
 private struct GenreFilter: View {
     let selectedGenreId: Int
     let toggleGenre: (Int) -> Void
@@ -96,8 +149,6 @@ private struct GenreFilter: View {
     }
 }
 
-
-/// Found movies as a list, or a "no results" message when nothing matches.
 private struct SearchResults: View {
     let movies: [Movie]
     let query: String
@@ -115,7 +166,6 @@ private struct SearchResults: View {
     }
 }
 
-/// One found movie: a small poster on the left, the title, subtitle and rating on the right.
 private struct SearchResultRow: View {
     let movie: Movie
     
