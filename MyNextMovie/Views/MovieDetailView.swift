@@ -11,6 +11,7 @@ private let posterShadowOffset: CGFloat = 10
 struct MovieDetailView: View {
     let movie: Movie
     @State private var viewModel: MovieDetailViewModel
+    @State private var isShowingCinemas = false
     init(movie: Movie, loadDetails: @escaping MovieDetailsLoader = { _ in
         MovieDetails(id: 0, tagline: nil, runtime: nil, credits: nil, videos: nil, releaseDates: nil, watchProviders: nil, recommendations: nil)
     }) {
@@ -25,7 +26,9 @@ struct MovieDetailView: View {
                 
                 VStack(alignment: .leading, spacing: spacingLarge) {
                     MovieInfo(movie: movie, details: viewModel.details)
-                    
+
+                    inCinemasSection
+
                     switch viewModel.state {
                     case .idle, .loading:
                         ProgressView()
@@ -53,6 +56,32 @@ struct MovieDetailView: View {
         }
         .task {
             await viewModel.loadIfNeeded()
+        }
+        .sheet(isPresented: $isShowingCinemas) {
+            cinemaMapView(placement: .sheet)
+        }
+    }
+
+    @ViewBuilder
+    private var inCinemasSection: some View {
+        if isInCinemas(viewModel.details, regionCode: watchRegionCode, today: Date.now) {
+            NowInCinemas { isShowingCinemas = true }
+        }
+    }
+}
+
+private struct NowInCinemas: View {
+    let showCinemas: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: spacingSmall) {
+            Button(action: showCinemas) {
+                Label("Now in Cinemas", systemImage: symbolNameCinema)
+            }
+            .buttonStyle(.borderedProminent)
+            Text("See the cinemas near you. Showtimes are on each cinema's website.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
     }
 }

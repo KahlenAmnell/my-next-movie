@@ -1,3 +1,4 @@
+import Testing
 import XCTest
 @testable import MyNextMovie
 
@@ -27,7 +28,7 @@ final class MovieDetailsDecodingTests: XCTestCase {
         },
         "release_dates": {
             "results": [
-                {"iso_3166_1": "PL", "release_dates": [{"certification": ""}, {"certification": "16"}]}
+                {"iso_3166_1": "PL", "release_dates": [{"certification": "", "release_date": "1999-03-31T00:00:00.000Z", "type": 3}, {"certification": "16", "release_date": "1999-03-31T00:00:00.000Z", "type": 3}]}
             ]
         },
         "watch/providers": {
@@ -154,8 +155,8 @@ final class MovieDetailsTests: XCTestCase {
     
     func testCertificationSkipsEmptyOnes() {
         let releaseDates = [
-            CountryReleaseDates(countryCode: "PL", releaseDates: [ReleaseDate(certification: ""), ReleaseDate(certification: "16")]),
-            CountryReleaseDates(countryCode: "US", releaseDates: [ReleaseDate(certification: "R")])
+            CountryReleaseDates(countryCode: "PL", releaseDates: [ReleaseDate(certification: "", releaseDate: "", type: 0), ReleaseDate(certification: "16", releaseDate: "", type: 0)]),
+            CountryReleaseDates(countryCode: "US", releaseDates: [ReleaseDate(certification: "R", releaseDate: "", type: 0)])
         ]
         let d = makeMovieDetails(releaseDates: releaseDates)
         XCTAssertEqual(ageCertification(d, regionCode: "PL"), "16")
@@ -200,7 +201,7 @@ final class MovieDetailsTests: XCTestCase {
     
     func testFactsLineAddsRuntimeAndCertification() {
         let movie = Movie(id: 1, title: "Matrix", overview: "", releaseDate: "1999-03-31", posterPath: nil, voteAverage: 8.2, genreIds: [])
-            let releaseDates = [CountryReleaseDates(countryCode: "PL", releaseDates: [ReleaseDate(certification: "16")])]
+            let releaseDates = [CountryReleaseDates(countryCode: "PL", releaseDates: [ReleaseDate(certification: "16", releaseDate: "", type: 0)])]
             let d = makeMovieDetails(runtime: 136, releaseDates: releaseDates)
             XCTAssertEqual(movieFactsLine(movie, d, regionCode: "PL"), "1999 · ★ 8.2 · 2h 16m · 16")
         }
@@ -213,5 +214,85 @@ final class MovieDetailsTests: XCTestCase {
     func testProfileURLIsNilWithoutPhoto() {
         let member = CastMember(id: 1, name: "Test", character: "Test", profilePath: nil)
         XCTAssertNil(profileURL(member))
+    }
+}
+
+// MARK: - Now in cinemas
+
+/// 6 November 2026, the day "today" in these tests.
+private let testToday = Date(timeIntervalSince1970: 1_793_923_200)
+
+@MainActor
+private func makeDetails(
+    country: String = "PL", type: Int = releaseTypeTheatrical, releaseDate: String
+) -> MovieDetails {
+    let release = ReleaseDate(certification: "", releaseDate: releaseDate, type: type)
+    let countryReleases = CountryReleaseDates(countryCode: country, releaseDates: [release])
+    return MovieDetails(
+        id: 1,
+        tagline: nil,
+        runtime: nil,
+        credits: nil,
+        videos: nil,
+        releaseDates: ReleaseDateList(results: [countryReleases]),
+        watchProviders: nil,
+        recommendations: nil
+    )
+}
+
+@MainActor
+private func isInPolishCinemas(_ details: MovieDetails) -> Bool {
+    return isInCinemas(details, regionCode: "PL", today: testToday)
+}
+
+@MainActor
+struct InCinemasTests {
+    @Test func recentCinemaPremiereIsInCinemas() {
+        let details = makeDetails(releaseDate: "2026-10-17T00:00:00.000Z")
+
+        #expect(isInPolishCinemas(details))
+    }
+
+    @Test func limitedReleaseCountsToo() {
+        let details = makeDetails(
+            type: releaseTypeTheatricalLimited, releaseDate: "2026-10-17T00:00:00.000Z")
+
+        #expect(isInPolishCinemas(details))
+    }
+
+    @Test func oldPremiereIsNotInCinemas() {
+        // 42 days before is still in cinemas, 43 days is not.
+        let lastDay = makeDetails(releaseDate: "2026-09-25T00:00:00.000Z")
+        let tooOld = makeDetails(releaseDate: "2026-09-24T00:00:00.000Z")
+
+        #expect(isInPolishCinemas(lastDay))
+        #expect(!isInPolishCinemas(tooOld))
+    }
+
+    @Test func futurePremiereIsNotInCinemasYet() {
+        let details = makeDetails(releaseDate: "2026-11-07T00:00:00.000Z")
+
+        #expect(!isInPolishCinemas(details))
+        #expect(daysSinceReleaseDay("2026-11-07T00:00:00.000Z", today: testToday) == -1)
+    }
+
+    @Test func digitalReleaseIsNotCinema() {
+        let details = makeDetails(type: 4, releaseDate: "2026-10-17T00:00:00.000Z")
+
+        #expect(!isInPolishCinemas(details))
+    }
+
+    @Test func premiereInAnotherCountryDoesNotCount() {
+        let details = makeDetails(country: "US", releaseDate: "2026-10-17T00:00:00.000Z")
+
+        #expect(!isInPolishCinemas(details))
+    }
+
+    @Test func unreadableDateIsNotInCinemas() {
+        let details = makeDetails(releaseDate: "soon")
+
+        #expect(!isInPolishCinemas(details))
+        #expect(daysSinceReleaseDay("soon", today: testToday) == -1)
+        #expect(daysSinceReleaseDay("2026-10-17T00:00:00.000Z", today: testToday) == 20)
     }
 }

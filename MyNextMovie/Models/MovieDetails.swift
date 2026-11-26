@@ -74,7 +74,19 @@ nonisolated struct CountryReleaseDates: Decodable, Sendable {
 
 nonisolated struct ReleaseDate: Decodable, Sendable {
     let certification: String?
+    let releaseDate: String  // "2026-10-17T00:00:00.000Z"
+    let type: Int  // 2 and 3 are a cinema premiere
+
+    enum CodingKeys: String, CodingKey {
+        case certification
+        case releaseDate = "release_date"
+        case type
+    }
 }
+
+let releaseTypeTheatricalLimited = 2
+let releaseTypeTheatrical = 3
+let typicalCinemaRunInDays = 42
 
 nonisolated struct WatchProviderList: Decodable, Sendable {
     let results: [String: CountryWatchProviders]?
@@ -234,4 +246,32 @@ func profileURL(_ castMember: CastMember) -> URL? {
 func logoURL(_ provider: WatchProvider) -> URL? {
     guard let path = provider.logoPath, !path.isEmpty else { return nil }
     return URL(string: "https://image.tmdb.org/t/p/w92\(path)")
+}
+
+// MARK: - Now in cinemas
+
+func isInCinemas(_ details: MovieDetails, regionCode: String, today: Date) -> Bool {
+    let countries = details.releaseDates?.results ?? []
+    let country = countries.first { $0.countryCode == regionCode }
+    let releases = country?.releaseDates ?? []
+    return releases.contains { isRecentCinemaPremiere($0, today: today) }
+}
+
+func daysSinceReleaseDay(_ releaseDate: String, today: Date) -> Int {
+    let day = String(releaseDate.prefix(dayTextLength))
+    let format = Date.ISO8601FormatStyle().year().month().day()
+    guard let premiere = try? Date(day, strategy: format) else { return -1 }
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = .gmt
+    let days = calendar.dateComponents([.day], from: premiere, to: calendar.startOfDay(for: today))
+    return max(days.day ?? -1, -1)
+}
+
+private let dayTextLength = 10
+
+private func isRecentCinemaPremiere(_ release: ReleaseDate, today: Date) -> Bool {
+    let isCinemaType =
+        release.type == releaseTypeTheatricalLimited || release.type == releaseTypeTheatrical
+    let daysAgo = daysSinceReleaseDay(release.releaseDate, today: today)
+    return isCinemaType && daysAgo >= 0 && daysAgo <= typicalCinemaRunInDays
 }

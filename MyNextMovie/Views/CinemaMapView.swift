@@ -179,6 +179,15 @@ struct CinemaMapView: View {
     }
 }
 
+/// The Cinemas screen with the real location and the real routes, for the tab and the sheet.
+func cinemaMapView(placement: CinemaMapPlacement) -> CinemaMapView {
+    let viewModel = CinemaMapViewModel(
+        cinemas: wroclawCinemas,
+        findUserLocation: findUserLocation,
+        lastKnownLocation: lastKnownUserLocation)
+    return CinemaMapView(viewModel: viewModel, findRoute: findMapKitRoute, placement: placement)
+}
+
 #Preview {
     CinemaMapView(
         viewModel: CinemaMapViewModel(

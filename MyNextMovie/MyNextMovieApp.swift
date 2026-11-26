@@ -112,12 +112,7 @@ private struct AppTabs: View {
     }
 
     private var cinemaMap: some View {
-        let viewModel = CinemaMapViewModel(
-            cinemas: wroclawCinemas,
-            findUserLocation: findUserLocation,
-            lastKnownLocation: lastKnownUserLocation)
-        return CinemaMapView(
-            viewModel: viewModel, findRoute: findMapKitRoute, placement: .tab)
+        cinemaMapView(placement: .tab)
     }
 
     private var searchScreen: some View {
