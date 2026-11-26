@@ -1,5 +1,6 @@
 import CoreLocation
 import Foundation
+import MapKit
 import Testing
 
 @testable import MyNextMovie
@@ -102,5 +103,21 @@ struct WroclawCinemasTests {
         let warsaw = CLLocationCoordinate2D(latitude: 52.2297, longitude: 21.0122)
 
         #expect(!isInRegion(warsaw, wroclawMapRegion))
+    }
+}
+
+@MainActor
+struct MapKitConversionTests {
+    @Test func mapItemForCinemaKeepsNameAndPosition() {
+        let item = mapItemForCinema(testCinemaDCF)
+
+        #expect(item.name == testCinemaDCF.name)
+        #expect(item.placemark.coordinate.latitude == testCinemaDCF.latitude)
+        #expect(item.placemark.coordinate.longitude == testCinemaDCF.longitude)
+    }
+
+    @Test func travelModeBecomesMapKitTransportType() {
+        #expect(transportTypeForMapKit(.walking) == .walking)
+        #expect(transportTypeForMapKit(.driving) == .automobile)
     }
 }

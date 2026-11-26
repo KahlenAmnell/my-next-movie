@@ -13,15 +13,22 @@ struct CinemaMapView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel: CinemaMapViewModel
     @State private var cameraPosition = MapCameraPosition.region(wroclawMapRegion)
+    @State private var path: [Cinema] = []
+    private let findRoute: CinemaRouteFinder
     private let placement: CinemaMapPlacement
 
-    init(viewModel: CinemaMapViewModel, placement: CinemaMapPlacement) {
+    init(
+        viewModel: CinemaMapViewModel,
+        findRoute: @escaping CinemaRouteFinder,
+        placement: CinemaMapPlacement
+    ) {
         _viewModel = State(initialValue: viewModel)
+        self.findRoute = findRoute
         self.placement = placement
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             VStack(spacing: 0) {
                 map.containerRelativeFrame(.vertical) { height, _ in height * mapHeightShare }
                 locationUnavailableNotice
@@ -30,6 +37,7 @@ struct CinemaMapView: View {
             .navigationTitle("Cinemas")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { doneButton }
+            .navigationDestination(for: Cinema.self) { cinema in detailView(cinema) }
         }
         .task { await viewModel.locateUserIfNeeded() }
     }
@@ -40,11 +48,7 @@ struct CinemaMapView: View {
         Map(position: $cameraPosition, selection: mapSelection) {
             UserAnnotation()
             ForEach(viewModel.cinemas) { cinema in
-                Marker(
-                    cinema.name, systemImage: symbolNameCinema,
-                    coordinate: cinemaCoordinate(cinema)
-                )
-                .tag(cinema.id)
+                cinemaMarker(cinema)
             }
         }
         .mapStyle(.standard(emphasis: .muted, pointsOfInterest: .excludingAll))
@@ -53,6 +57,14 @@ struct CinemaMapView: View {
             MapCompass()
         }
         .onMapCameraChange { context in viewModel.visibleRegion = context.region }
+    }
+
+    private func cinemaMarker(_ cinema: Cinema) -> some MapContent {
+        Marker(
+            cinema.name, systemImage: symbolNameCinema,
+            coordinate: cinemaCoordinate(cinema)
+        )
+        .tag(cinema.id)
     }
 
     private var mapSelection: Binding<String?> {
@@ -86,11 +98,7 @@ struct CinemaMapView: View {
 
     private var cinemaList: some View {
         ScrollViewReader { proxy in
-            List(viewModel.cinemas) { cinema in
-                cinemaRow(cinema)
-                    .id(cinema.id)
-                    .listRowBackground(rowBackground(for: cinema))
-            }
+            List(viewModel.cinemas) { cinema in listRow(cinema) }
             .listStyle(.plain)
             .onChange(of: viewModel.selectedCinemaId) { _, selectedId in
                 scrollToCinema(selectedId, using: proxy)
@@ -98,19 +106,45 @@ struct CinemaMapView: View {
         }
     }
 
+    private func listRow(_ cinema: Cinema) -> some View {
+        cinemaRow(cinema)
+            .id(cinema.id)
+            .listRowBackground(rowBackground(for: cinema))
+    }
+
     private func cinemaRow(_ cinema: Cinema) -> some View {
-        Button {
-            selectFromList(cinema)
-        } label: {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(cinema.name).font(.headline)
-                Text(cinema.address).font(.subheadline).foregroundStyle(.secondary)
-                Text(formattedDistance(cinema.distanceInMeters))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        HStack {
+            Button {
+                selectFromList(cinema)
+            } label: {
+                cinemaTexts(cinema).frame(maxWidth: .infinity, alignment: .leading)
             }
+            Button {
+                path.append(cinema)
+            } label: {
+                Image(systemName: symbolNameDetails)
+            }
+            .accessibilityLabel("Details of \(cinema.name)")
         }
         .buttonStyle(.plain)
+    }
+
+    private func cinemaTexts(_ cinema: Cinema) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(cinema.name).font(.headline)
+            Text(cinema.address).font(.subheadline).foregroundStyle(.secondary)
+            Text(formattedDistance(cinema.distanceInMeters))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func detailView(_ cinema: Cinema) -> some View {
+        CinemaDetailView(
+            viewModel: CinemaDetailViewModel(
+                cinema: cinema,
+                userLocation: viewModel.userLocation,
+                findRoute: findRoute))
     }
 
     private func rowBackground(for cinema: Cinema) -> Color {
@@ -150,5 +184,6 @@ struct CinemaMapView: View {
         viewModel: CinemaMapViewModel(
             cinemas: wroclawCinemas,
             findUserLocation: { fallbackUserLocation }),
+        findRoute: { _, _, _ in noRoute },
         placement: .tab)
 }

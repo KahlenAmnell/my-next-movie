@@ -116,7 +116,8 @@ private struct AppTabs: View {
             cinemas: wroclawCinemas,
             findUserLocation: findUserLocation,
             lastKnownLocation: lastKnownUserLocation)
-        return CinemaMapView(viewModel: viewModel, placement: .tab)
+        return CinemaMapView(
+            viewModel: viewModel, findRoute: findMapKitRoute, placement: .tab)
     }
 
     private var searchScreen: some View {
