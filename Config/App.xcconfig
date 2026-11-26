@@ -31,3 +31,6 @@ SUPABASE_URL =
 SUPABASE_ANON_KEY =
 
 #include? "Secrets.xcconfig"
+
+// Asked by iOS before the first use of the location.
+INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = My Next Movie shows the cinemas near you on the map.
