@@ -116,8 +116,13 @@ private struct AppTabs: View {
     }
 
     private var searchScreen: some View {
-        SearchView(
+        let wishViewModel = WishSearchViewModel(
+            parseWish: parseWishWithAI,
+            searchByFilters: searchTMDBMoviesByFilters,
+            searchByText: searchTMDBMovies)
+        return SearchView(
             viewModel: SearchViewModel(searchMovies: searchMovies),
+            wishViewModel: wishViewModel,
             loadDetails: loadDetails
         )
     }

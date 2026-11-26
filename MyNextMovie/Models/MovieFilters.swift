@@ -14,7 +14,11 @@ nonisolated struct MovieFilters: Codable, Equatable {
     let title: String
 }
 
-let noMovieFilters = MovieFilters(
+func yearOfToday() -> Int {
+    return Calendar.current.component(.year, from: .now)
+}
+
+let noMovieFilters =MovieFilters(
     genreIds: [], fromYear: noYear, toYear: noYear, people: [], keywords: [], title: "")
 
 func validatedFilters(_ filters: MovieFilters, currentYear: Int) -> MovieFilters {

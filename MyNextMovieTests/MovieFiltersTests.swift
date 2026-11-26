@@ -144,11 +144,11 @@ struct MovieFiltersTextTests {
             """
         let filters = try JSONDecoder().decode(MovieFilters.self, from: Data(json.utf8))
 
-        #expect(
-            filters
-                == filtersWith(
-                    genreIds: [genreIdComedy], fromYear: 1990, toYear: 1999,
-                    people: ["Keanu Reeves"]))
+        let expected = filtersWith(
+            genreIds: [genreIdComedy], fromYear: 1990, toYear: 1999,
+            people: ["Keanu Reeves"])
+
+        #expect(filters == expected)
     }
 
     @Test func errorAnswerShowsItsMessage() {

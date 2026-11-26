@@ -21,7 +21,8 @@ let symbolNameAccount = "person.crop.circle"
 let symbolNameSyncing = "arrow.triangle.2.circlepath"
 let symbolNameSynced = "checkmark.circle"
 let symbolNameSearchHistory = "clock.arrow.circlepath"
-let symbolNameError = "exclamationmark.triangle"
+let symbolNameWish = "sparkles"
+let symbolNameError ="exclamationmark.triangle"
 let symbolNameRatingStar = "star.fill"
 
 // SF Symbols of the Cinemas tab.
