@@ -38,6 +38,39 @@ nonisolated struct CloudSavedMovie: Codable, Equatable {
     }
 }
 
+// MARK: - AI search (edge function)
+
+let supabaseFunctionMovieFilters = "movie-filters"
+
+nonisolated struct MovieWishRequest: Encodable {
+    let wish: String
+}
+
+private nonisolated struct FunctionErrorAnswer: Decodable {
+    let message: String
+}
+
+func functionErrorMessage(statusCode: Int, data: Data) -> String {
+    let answer = try? JSONDecoder().decode(FunctionErrorAnswer.self, from: data)
+    return answer?.message ?? "The AI search failed (error \(statusCode))."
+}
+
+func parseWishWithAI(_ wish: String) async throws
+    -> MovieFilters
+{
+    let client = try requireSupabaseClient()
+    let options = FunctionInvokeOptions(
+        body: MovieWishRequest(wish: wish))
+    do {
+        return try await client.functions.invoke(
+            supabaseFunctionMovieFilters, options: options)
+    } catch FunctionsError.httpError(let status, let data) {
+        throw SupabaseError(
+            message: functionErrorMessage(
+                statusCode: status, data: data))
+    }
+}
+
 // MARK: - Client
 
 private var supabaseClient: SupabaseClient?

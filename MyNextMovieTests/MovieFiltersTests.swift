@@ -151,6 +151,62 @@ struct MovieFiltersTextTests {
                     people: ["Keanu Reeves"]))
     }
 
-    // TODO: Lab 7, path A only. errorAnswerShowsItsMessage tests `functionErrorMessage`
-    // from Supabase.swift, so it is added together with that function (task 3).
+    @Test func errorAnswerShowsItsMessage() {
+        let limitAnswer = Data(#"{"message": "You can ask 50 times a day."}"#.utf8)
+        let emptyAnswer = Data("<html>Bad gateway</html>".utf8)
+
+        #expect(
+            functionErrorMessage(statusCode: 429, data: limitAnswer)
+                == "You can ask 50 times a day.")
+        #expect(functionErrorMessage(statusCode: 502, data: emptyAnswer).contains("502"))
+    }
+}
+
+private func valueOf(_ request: TMDBRequest, _ name: String) -> String? {
+    for item in request.parameters where item.name == name {
+        return item.value
+    }
+    return nil
+}
+
+@MainActor
+struct DiscoverRequestTests {
+    @Test func withoutFiltersHasNoParameters() {
+        let request = tmdbDiscoverRequest(noMovieFilters, personIds: [], keywordIds: [])
+
+        #expect(request.path == tmdbPathDiscoverMovies)
+        #expect(request.parameters.isEmpty)
+    }
+
+    @Test func anyGenreAndKeywordButEveryPerson() {
+        let filters = filtersWith(genreIds: [genreIdComedy, genreIdDrama])
+        let request = tmdbDiscoverRequest(filters, personIds: [6384, 1], keywordIds: [5, 7])
+
+        #expect(valueOf(request, TMDBAPI.queryParamGenres) == "35|18")
+        #expect(valueOf(request, TMDBAPI.queryParamPeople) == "6384,1")
+        #expect(valueOf(request, TMDBAPI.queryParamKeywords) == "5|7")
+    }
+
+    @Test func yearsCoverWholeYears() {
+        let filters = filtersWith(fromYear: 1990, toYear: 1999)
+        let request = tmdbDiscoverRequest(filters, personIds: [], keywordIds: [])
+
+        #expect(valueOf(request, TMDBAPI.queryParamFromDate) == "1990-01-01")
+        #expect(valueOf(request, TMDBAPI.queryParamToDate) == "1999-12-31")
+    }
+
+    @Test func nameSearchSendsTheName() {
+        let request = tmdbNameSearchRequest(path: tmdbPathSearchPeople, name: "Keanu Reeves")
+
+        #expect(request.path == tmdbPathSearchPeople)
+        #expect(request.parameters == [URLQueryItem(name: TMDBAPI.queryParamQuery, value: "Keanu Reeves")])
+    }
+
+    @Test func firstIdIsTheBestMatch() throws {
+        let twoResults = Data(#"{"results": [{"id": 6384}, {"id": 2}]}"#.utf8)
+        let noResults = Data(#"{"results": []}"#.utf8)
+
+        #expect(try decodeFirstTMDBId(twoResults) == 6384)
+        #expect(try decodeFirstTMDBId(noResults) == noTMDBId)
+    }
 }

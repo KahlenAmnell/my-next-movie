@@ -14,6 +14,10 @@ enum TMDBAPI {
     static let queryParamQuery = "query"
     static let queryParamGenres = "with_genres"
     static let queryParamAppend = "append_to_response"
+    static let queryParamPeople = "with_people"
+    static let queryParamKeywords = "with_keywords"
+    static let queryParamFromDate = "primary_release_date.gte"
+    static let queryParamToDate = "primary_release_date.lte"
     // HTTP codes
     static let httpStatusOK = 200
     static let httpStatusUnauthorized = 401
@@ -48,15 +52,19 @@ nonisolated enum TMDBError: LocalizedError {
 }
 
 func tmdbURL(path: String, parameters: [String: String], apiKey: String) -> URL? {
+    var queryItems: [URLQueryItem] = []
+    for (key, value) in parameters {
+        queryItems.append(URLQueryItem(name: key, value: value))
+    }
+    return tmdbURL(path: path, parameters: queryItems, apiKey: apiKey)
+}
+
+func tmdbURL(path: String, parameters: [URLQueryItem], apiKey: String) -> URL? {
     var components = URLComponents()
     components.scheme = TMDBAPI.scheme
     components.host = TMDBAPI.host
     components.path = path
-    var queryItems = [URLQueryItem(name: TMDBAPI.queryParamApiKey, value: apiKey)]
-    for (key, value) in parameters {
-        queryItems.append(URLQueryItem(name: key, value: value))
-    }
-    components.queryItems = queryItems
+    components.queryItems = [URLQueryItem(name: TMDBAPI.queryParamApiKey, value: apiKey)] + parameters
     return components.url
 }
 
@@ -226,4 +234,144 @@ func loadTMDBMovieDetails(movieId: Int, cache: ModelContext) async throws -> Mov
         try await fetchMovieDetailsData(movieId: movieId)
     }
     return try decodeTMDBMovieDetails(data)
+}
+
+// MARK: - Search by filters (AI search)
+
+let tmdbPathDiscoverMovies = "/3/discover/movie"
+let tmdbPathSearchPeople = "/3/search/person"
+let tmdbPathSearchKeywords = "/3/search/keyword"
+let noTMDBId = 0
+
+nonisolated struct TMDBRequest: Equatable {
+    let path: String
+    let parameters: [URLQueryItem]
+}
+
+typealias TMDBFetch =
+    @MainActor (_ request: TMDBRequest) async throws -> Data
+
+func requireTMDBAPIKey() throws -> String {
+    let apiKey = tmdbAPIKey()
+    guard !apiKey.isEmpty else {
+        throw TMDBError.message("Missing TMDB API key. Add it to Config/Secrets.xcconfig.")
+    }
+    return apiKey
+}
+
+func fetchTMDBRequest(_ request: TMDBRequest) async throws -> Data {
+    let apiKey = try requireTMDBAPIKey()
+    let address = tmdbURL(
+        path: request.path,
+        parameters: request.parameters, apiKey: apiKey)
+    return try await fetchTMDBData(address)
+}
+
+func searchTMDBMoviesByFilters(_ filters: MovieFilters) async throws -> [Movie] {
+    return try await searchMoviesByFilters(filters, fetch: fetchTMDBRequest)
+}
+
+func searchMoviesByFilters(_ filters: MovieFilters, fetch: TMDBFetch) async throws -> [Movie] {
+    if !filters.title.isEmpty {
+        return try await searchMoviesByTitle(filters, fetch: fetch)
+    }
+    async let foundPersonIds = lookUpTMDBIds(
+        path: tmdbPathSearchPeople, names: filters.people, fetch: fetch)
+    async let foundKeywordIds = lookUpTMDBIds(
+        path: tmdbPathSearchKeywords, names: filters.keywords, fetch: fetch)
+    let personIds = try await foundPersonIds
+    let keywordIds = knownTMDBIds(try await foundKeywordIds)
+
+    let hasUnknownPerson = personIds.contains(noTMDBId)
+    let hasAnythingToAsk =
+        !filters.genreIds.isEmpty || filters.fromYear != noYear || filters.toYear != noYear
+        || !personIds.isEmpty || !keywordIds.isEmpty
+    if hasUnknownPerson || !hasAnythingToAsk {
+        return []
+    }
+    let request = tmdbDiscoverRequest(filters, personIds: personIds, keywordIds: keywordIds)
+    return try decodeTMDBMovies(try await fetch(request))
+}
+
+private func searchMoviesByTitle(_ filters: MovieFilters, fetch: TMDBFetch) async throws
+    -> [Movie]
+{
+    let request = tmdbNameSearchRequest(path: TMDBAPI.searchPath, name: filters.title)
+    let movies = try decodeTMDBMovies(try await fetch(request))
+    return moviesMatchingFilters(movies, filters)
+}
+
+private func lookUpTMDBIds(path: String, names: [String], fetch: TMDBFetch) async throws
+    -> [Int]
+{
+    return try await withThrowingTaskGroup(of: (position: Int, id: Int).self) { group in
+        for (position, name) in names.enumerated() {
+            group.addTask {
+                let request = tmdbNameSearchRequest(path: path, name: name)
+                return (position, try decodeFirstTMDBId(try await fetch(request)))
+            }
+        }
+        var ids = Array(repeating: noTMDBId, count: names.count)
+        for try await found in group {
+            ids[found.position] = found.id
+        }
+        return ids
+    }
+}
+
+private func knownTMDBIds(_ ids: [Int]) -> [Int] {
+    var known: [Int] = []
+    for id in ids where id != noTMDBId {
+        known.append(id)
+    }
+    return known
+}
+
+nonisolated func tmdbDiscoverRequest(
+    _ filters: MovieFilters, personIds: [Int], keywordIds: [Int]
+) -> TMDBRequest {
+    var parameters: [URLQueryItem] = []
+    appendIds(&parameters, TMDBAPI.queryParamGenres, filters.genreIds, separator: "|")
+    appendIds(&parameters, TMDBAPI.queryParamPeople, personIds, separator: ",")
+    appendIds(&parameters, TMDBAPI.queryParamKeywords, keywordIds, separator: "|")
+    if filters.fromYear != noYear {
+        parameters.append(
+            URLQueryItem(name: TMDBAPI.queryParamFromDate, value: "\(filters.fromYear)-01-01"))
+    }
+    if filters.toYear != noYear {
+        parameters.append(
+            URLQueryItem(name: TMDBAPI.queryParamToDate, value: "\(filters.toYear)-12-31"))
+    }
+    return TMDBRequest(path: tmdbPathDiscoverMovies, parameters: parameters)
+}
+
+private nonisolated func appendIds(
+    _ parameters: inout [URLQueryItem], _ name: String, _ ids: [Int], separator: String
+) {
+    if ids.isEmpty {
+        return
+    }
+    var texts: [String] = []
+    for id in ids {
+        texts.append(String(id))
+    }
+    parameters.append(URLQueryItem(name: name, value: texts.joined(separator: separator)))
+}
+
+nonisolated func tmdbNameSearchRequest(path: String, name: String) -> TMDBRequest {
+    return TMDBRequest(
+        path: path, parameters: [URLQueryItem(name: TMDBAPI.queryParamQuery, value: name)])
+}
+
+private nonisolated struct TMDBIdPage: Decodable {
+    let results: [TMDBIdResult]
+}
+
+private nonisolated struct TMDBIdResult: Decodable {
+    let id: Int
+}
+
+nonisolated func decodeFirstTMDBId(_ data: Data) throws -> Int {
+    let page = try JSONDecoder().decode(TMDBIdPage.self, from: data)
+    return page.results.first?.id ?? noTMDBId
 }

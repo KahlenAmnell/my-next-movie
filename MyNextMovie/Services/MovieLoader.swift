@@ -7,3 +7,9 @@ typealias MovieLoader = () async throws -> [Movie]
 typealias MovieSearch = (_ query: String, _ genreId: Int) async throws -> [Movie]
 
 typealias MovieDetailsLoader = (_ movieId: Int) async throws -> MovieDetails
+
+typealias MovieWishParser =
+    (_ wish: String) async throws -> MovieFilters
+
+typealias FilteredMovieSearch =
+    (_ filters: MovieFilters) async throws -> [Movie]
